@@ -15,7 +15,7 @@
                 ["Lehrkraft", "varchar(255)"],
                 ["Themenfeld", "varchar(255)"],
                 ["Wochentag", "varchar(255)"],
-                ["PlatzanzahlMIN", "int"],
+                ["MinimumVorhanden", "bool"],
                 ["PlatzanzahlMAX", "int"]
             ]
         },

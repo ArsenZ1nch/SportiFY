@@ -1,7 +1,7 @@
 import sqlite3, json
 
 
-# scheiss KONSTANTE ist PATH für die Datebank
+# schei21ss KONSTANTE ist PATH für die Datebank
 DATABASE_PATH = "database/database.db"
 
 # öffne den Müll oder erstelle und mach es leer
