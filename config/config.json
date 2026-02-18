@@ -3,8 +3,39 @@
         "student": {
             "PRIMARY_KEY": ["ID", "int"],
             "SECONDARY_KEYS": [
-                ["FirstName", "varchar(255)"],
-                ["LastName", "varchar(255)"]
+                ["VorName", "varchar(255)"],
+                ["NachName", "varchar(255)"]
+            ]
+        },
+        "kurs": {
+            "PRIMARY_KEY": ["ID", "int"],
+            "SECONDARY_KEYS": [
+                ["KursName", "varchar(255)"],
+                ["Sporthalle", "varchar(255)"],
+                ["Lehrkraft", "varchar(255)"],
+                ["Themenfeld", "varchar(255)"],
+                ["Wochentag", "varchar(255)"],
+                ["PlatzanzahlMIN", "int"],
+                ["PlatzanzahlMAX", "int"]
+            ]
+        },
+        "sonderkurse": {
+            "PRIMARY_KEY": ["ID", "int"],
+            "SECONDARY_KEYS": [
+                ["KursName", "varchar(255)"],
+                ["Wochentag", "varchar(255)"]
+            ]
+        },
+        "sportkurse_zuteilung": {
+            "PRIMARY_KEY": ["ID", "int"],
+            "SECONDARY_KEYS": [
+                ["Semester", "int"]
+            ]
+        },
+        "sonderkurse_zuteilung": {
+            "PRIMARY_KEY": ["ID", "int"],
+            "SECONDARY_KEYS": [
+                ["Semester", "int"]
             ]
         }
     }
