@@ -1,15 +1,16 @@
 import sqlite3
 import json
 
+TEST_DATABASE_PATH = "test/test.db"
 
 if __name__ == "__main__":
     try:
-        with open("test.db", "w") as f:
+        with open(TEST_DATABASE_PATH, "w") as f:
             f.write("")
     except Exception:
-        open("test.db", "x")
+        open(TEST_DATABASE_PATH, "x")
 
-    database_connection = sqlite3.connect("test.db")
+    database_connection = sqlite3.connect(TEST_DATABASE_PATH)
     database_cursor = database_connection.cursor()
     
     with open("config/config.json") as config_file:
@@ -24,6 +25,8 @@ if __name__ == "__main__":
         sql_command += f"PRIMARY KEY ({database_tables[table_name]["PRIMARY_KEY"][0]})\n);"
     
     print(sql_command)
+
+    database_cursor.execute(sql_command)
         
         
 
