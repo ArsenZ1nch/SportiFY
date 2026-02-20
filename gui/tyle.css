@@ -1,0 +1,403 @@
+/* ich tue garnicht so als ob ich das verstehe mehr */
+:root {
+    --bg: #f3fbfb;
+    --panel: rgba(255, 255, 255, 0.72);
+    --panel-strong: rgba(255, 255, 255, 0.9);
+    --ink: #102a2a;
+    --muted: #5b7a7a;
+    --accent: #11c5c5;
+    --accent-2: #46e1e1;
+    --ok: #1fbf8f;
+    --warn: #f0b04f;
+    --err: #e97272;
+    --shadow: 0 18px 60px rgba(8, 20, 20, 0.12);
+    --radius: 18px;
+}
+
+* {
+    box-sizing: border-box;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: transparent;
+    color: var(--ink);
+    font-family: "IBM Plex Sans", "Fira Sans", "Source Sans 3", "Segoe UI", sans-serif;
+}
+
+body {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.app {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    background: radial-gradient(1200px 600px at 10% -10%, rgba(233, 255, 255, 0.9) 0%, rgba(233, 255, 255, 0.35) 45%, transparent 65%),
+        linear-gradient(140deg, rgba(247, 255, 255, 0.95) 0%, rgba(239, 247, 247, 0.92) 55%, rgba(245, 251, 251, 0.95) 100%);
+    border: 1px solid rgba(17, 197, 197, 0.15);
+    border-radius: 22px;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: linear-gradient(90deg, rgba(17, 197, 197, 0.18), rgba(255, 255, 255, 0.6));
+    border-bottom: 1px solid rgba(16, 42, 42, 0.08);
+}
+
+.titlebar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.titlebar-left .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: linear-gradient(140deg, var(--accent), var(--accent-2));
+    box-shadow: 0 0 14px rgba(17, 197, 197, 0.7);
+}
+
+.window-controls {
+    display: flex;
+    gap: 6px;
+}
+
+.window-btn {
+    width: 30px;
+    height: 24px;
+    border-radius: 8px;
+    border: 1px solid rgba(16, 42, 42, 0.16);
+    background: rgba(255, 255, 255, 0.7);
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.window-btn:hover {
+    transform: translateY(-1px);
+    background: rgba(17, 197, 197, 0.2);
+}
+
+.window-btn.close:hover {
+    background: rgba(233, 114, 114, 0.2);
+    border-color: rgba(233, 114, 114, 0.6);
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 22px;
+    border-bottom: 1px solid rgba(16, 42, 42, 0.08);
+    background: rgba(255, 255, 255, 0.6);
+}
+
+/* TODO: brauchen wir navbar? es braucht viel platz im code und ist bisschen unnötig */
+.nav {
+    display: flex;
+    gap: 12px;
+}
+
+.nav button {
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 14px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    cursor: default;
+}
+
+.nav button.active {
+    background: rgba(17, 197, 197, 0.15);
+    color: var(--ink);
+    box-shadow: inset 0 0 0 1px rgba(17, 197, 197, 0.25);
+}
+
+.status {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(16, 42, 42, 0.08);
+}
+
+.content {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 18px;
+    padding: 22px;
+    flex: 1;
+}
+
+.card {
+    background: var(--panel-strong);
+    border-radius: var(--radius);
+    border: 1px solid rgba(16, 42, 42, 0.08);
+    padding: 22px;
+    box-shadow: 0 8px 30px rgba(12, 24, 24, 0.08);
+    position: relative;
+    overflow: hidden;
+    animation: rise 0.6s ease both;
+}
+
+/* bitte feedback für animation, ich finde eigentlich doof aber mehr kann ich nd machen hab nicht so viel skill*/
+/* das ist der EFFEKT BEIM START NICHT BUTTONS oder sowas */
+@keyframes rise {
+    from {
+        transform: translateY(12px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.headline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+h1 {
+    font-size: 26px;
+    margin: 0;
+    font-weight: 600;
+}
+
+.sub {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 18px;
+}
+
+.actions {
+    display: grid;
+    gap: 16px;
+}
+
+.action-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* TODO: vielleicht etwas mehr reusen und nicht alles kopieren, bisschen viel code für nix */
+
+button.primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #062424;
+    font-weight: 600;
+    border: none;
+    border-radius: 14px;
+    padding: 14px 18px;
+    font-size: 15px;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(17, 197, 197, 0.25);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+button.primary:hover:enabled {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 24px rgba(17, 197, 197, 0.32);
+}
+
+button.primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* hab schon vergessen wo */
+button.ghost {
+    background: transparent;
+    border: 1px solid rgba(16, 42, 42, 0.2);
+    color: var(--ink);
+    border-radius: 14px;
+    padding: 14px 18px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: border 0.2s ease, transform 0.2s ease;
+}
+
+button.ghost:hover:enabled {
+    border-color: rgba(17, 197, 197, 0.6);
+    transform: translateY(-1px);
+}
+
+.info-grid {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.info-chip {
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(17, 197, 197, 0.08);
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.notifications {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.notif-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 420px;
+    overflow: auto;
+    padding-right: 6px;
+}
+
+.notif {
+    position: relative;
+    padding: 12px 14px;
+    padding-right: 42px;
+    border-radius: 12px;
+    border-left: 4px solid var(--accent);
+    background: rgba(16, 42, 42, 0.04);
+    animation: fadeIn 0.25s ease;
+    font-size: 13px;
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+.notif-text {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+.notif-delete {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 22px;
+    height: 22px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(16, 42, 42, 0.08);
+    color: var(--ink);
+    font-size: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    cursor: pointer;
+}
+
+.notif:hover .notif-delete {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-1px);
+}
+
+.notif.success {
+    border-left-color: var(--ok);
+}
+
+.notif.warning {
+    border-left-color: var(--warn);
+}
+
+.notif.error {
+    border-left-color: var(--err);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 20, 20, 0.35);
+    backdrop-filter: blur(4px);
+    z-index: 10;
+}
+
+.modal.active {
+    display: flex;
+    animation: fadeIn 0.2s ease;
+}
+
+.modal-card {
+    background: white;
+    padding: 22px 24px;
+    border-radius: 16px;
+    min-width: 280px;
+    max-width: 420px;
+    box-shadow: var(--shadow);
+}
+
+.modal-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+}
+
+.modal-card p {
+    margin: 0 0 16px 0;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.modal-card button {
+    width: 100%;
+}
+
+.footer {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: right;
+    padding: 10px 22px 18px;
+}
+
+@media (max-width: 900px) {
+    .content {
+        grid-template-columns: 1fr;
+    }
+
+    .action-row {
+        grid-template-columns: 1fr;
+    }
+}
