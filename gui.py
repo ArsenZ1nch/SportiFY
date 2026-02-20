@@ -62,3 +62,8 @@ class MainWindow(QMainWindow):
         level_payload = json.dumps(level)
         script = f"window.__notifyFromPython({payload}, {level_payload});"
         self.view.page().runJavaScript(script)
+
+if __name__ == "__main__":
+    print ( "Skibidi Toilet: nicht ausführen goofy " )
+else:
+    pass
