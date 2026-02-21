@@ -9,6 +9,12 @@
     <link rel="stylesheet" type="text/css" href="./tyle.css">
     <style>
         /* moved css to external file */
+        .external-dropdown{position:relative;display:inline-flex;align-items:center}
+        .external-menu{position:absolute;right:0;top:36px;background:#fff;color:#111;border:1px solid rgba(0,0,0,0.08);box-shadow:0 6px 18px rgba(0,0,0,0.08);display:none;min-width:200px;border-radius:6px;overflow:hidden;z-index:30}
+        .external-item{padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:8px}
+        .external-item:hover{background:#f6f6f6}
+        /* checkmarks removed */
+        .external-dropdown.open .external-menu{display:block}
     </style>
 </head>
 
@@ -47,10 +53,21 @@
                 <button class="active">Zuteilung</button>
                 <button>Kurse</button>
                 <button>Übersicht</button>
+                
+                <div class="external-dropdown">
+                    <button class="active" id="externalBtn">Öffnen ▾</button>
+                    <div id="externalMenu" class="external-menu">
+                        <div class="external-item" data-key="itslearning">MPG itsLearning</div>
+                        <div class="external-item" data-key="webuntis">MPG WebUntis</div>
+                    </div>
+                </div>
                 <!-- maybe we should remove especially this wierd stuff, idk why I added it in the first place -->
             </nav>
             <!-- tis is indeed working but we should remove for production :-) -->
-            <div class="status" id="statusChip">Backend: wartet…</div>
+                <div style="display:flex;align-items:center;gap:12px;">
+
+                <div class="status" id="statusChip">Backend: wartet…</div>
+            </div>
         </div>
         <!-- main view -->
         <main class="content">

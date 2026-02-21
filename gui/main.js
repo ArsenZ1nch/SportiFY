@@ -14,6 +14,9 @@ const titlebar = document.getElementById("titlebar");
 const minBtn = document.getElementById("minBtn");
 const maxBtn = document.getElementById("maxBtn");
 const closeBtn = document.getElementById("closeBtn");
+const externalBtn = document.getElementById("externalBtn");
+const externalMenu = document.getElementById("externalMenu");
+const externalItems = document.querySelectorAll(".external-item");
 
 // verbindung für Python bestätigen
 function setReady(ready) {
@@ -48,6 +51,28 @@ function showModal(title, message) {
 }
 
 modalClose.addEventListener("click", () => modal.classList.remove("active"));
+
+externalBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    document.querySelectorAll('.external-dropdown').forEach(d=>d.classList.toggle('open'));
+});
+
+externalItems.forEach((it) => {
+    it.addEventListener("click", (e) => {
+        const key = it.dataset.key;
+        if (!backendReady) {
+            addNotification("Backend nicht bereit.", "warning");
+            return;
+        }
+        backend.openWindow(key);
+        document.querySelectorAll('.external-dropdown').forEach(d=>d.classList.remove('open'));
+    });
+});
+
+// close dropdown on outside click
+document.addEventListener('click', () => {
+    document.querySelectorAll('.external-dropdown').forEach(d=>d.classList.remove('open'));
+});
 
 assignBtn.addEventListener("click", () => {
     if (!backendReady) {
@@ -128,6 +153,7 @@ if (typeof qt !== "undefined") {
         if (backend) {
             setReady(true);
             addNotification("Backend verbunden.", "success");
+            // no dropdown checkmarks needed
         } else {
             addNotification("Backend-Objekt nicht gefunden.", "error");
         }
