@@ -1,41 +1,51 @@
 {
     "database_tables": {
-        "student": {
-            "PRIMARY_KEY": ["ID", "int"],
-            "SECONDARY_KEYS": [
+        "schueler": {
+            "primary_key": ["ID", "int"],
+            "columns": [
                 ["VorName", "varchar(255)"],
                 ["NachName", "varchar(255)"]
             ]
         },
-        "kurs": {
-            "PRIMARY_KEY": ["ID", "int"],
-            "SECONDARY_KEYS": [
+        "sportkurs": {
+            "primary_key": ["ID", "int"],
+            "columns": [
                 ["KursName", "varchar(255)"],
                 ["Sporthalle", "varchar(255)"],
                 ["Lehrkraft", "varchar(255)"],
                 ["Themenfeld", "varchar(255)"],
                 ["Wochentag", "varchar(255)"],
-                ["MinimumVorhanden", "bool"],
+                ["ifMinAnzahlVorhanden", "bool"],
                 ["PlatzanzahlMAX", "int"]
             ]
         },
-        "sonderkurse": {
-            "PRIMARY_KEY": ["ID", "int"],
-            "SECONDARY_KEYS": [
+        "sonderkurs": {
+            "primary_key": ["ID", "int"],
+            "columns": [
                 ["KursName", "varchar(255)"],
                 ["Wochentag", "varchar(255)"]
             ]
         },
+
+        
         "sportkurse_zuteilung": {
-            "PRIMARY_KEY": ["ID", "int"],
-            "SECONDARY_KEYS": [
+            "primary_key": ["ID", "int"],
+            "columns": [
                 ["Semester", "int"]
+            ],
+            "connected_tables": [
+                "schueler",
+                "sportkurs"
             ]
         },
         "sonderkurse_zuteilung": {
-            "PRIMARY_KEY": ["ID", "int"],
-            "SECONDARY_KEYS": [
+            "primary_key": ["ID", "int"],
+            "columns": [
                 ["Semester", "int"]
+            ],
+            "connected_tables": [
+                "schueler",
+                "sonderkurs"
             ]
         }
     }
