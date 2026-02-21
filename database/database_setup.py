@@ -37,28 +37,27 @@ for table_name in database_tables:
         sql_table_command += f", {column[0]} {column[1]} NOT NULL"
 
     # ONLY FOR RELATIONSHIP TABLES: create foreign keys connection
-    if table.get("connected_tables"):
-        # sqlite requires foreign key constraints to be at the end of the query -> empty placeholder string 
-        fkey_constraint_query = str()
-
-        for connected_table_name in table["connected_tables"]:
-            primary_key_name, primary_key_datatype = database_tables[connected_table_name]["primary_key"]  # name & data type of primary key of connected table
-            foreign_key_name = f"{connected_table_name}_{primary_key_name}"  # unique foreign key name
-
+    # sqlite requires foreign key constraints to be at the end of the query -> empty placeholder string 
+    fkey_constraint_query = str()
+    for connected_table_name in table["foreign_keys"]:
+        primary_key_name, primary_key_datatype = database_tables[connected_table_name]["primary_key"]  # name of primary key of connected table
+        
+        for foreign_key_name in table["foreign_keys"][connected_table_name]:
             # APPEND to SQL query: foreign key name & data type
             sql_table_command += f", {foreign_key_name} {primary_key_datatype} NOT NULL"
 
             # add constraint query to placeholder string
             fkey_constraint_query += f", FOREIGN KEY ({foreign_key_name}) REFERENCES {connected_table_name}({primary_key_name})"
-        
-        # APPEND to SQL query: foreign key constraints
-        sql_table_command += fkey_constraint_query
+    
+    # APPEND to SQL query: foreign key constraints
+    sql_table_command += fkey_constraint_query
 
     # FINISH SQL query
     sql_table_command += ");"
 
     # EXECUTE SQL query
-    database_cursor.execute(sql_table_command)
+    # database_cursor.execute(sql_table_command)
+    print(sql_table_command)
 
 
 if __name__ == "__main__":

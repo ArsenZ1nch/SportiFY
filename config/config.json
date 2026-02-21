@@ -5,7 +5,10 @@
             "columns": [
                 ["VorName", "varchar(255)"],
                 ["NachName", "varchar(255)"]
-            ]
+            ],
+            "foreign_keys": {
+                "sportkurs": ["Wunsch1_ID", "Wunsch2_ID", "Wunsch3_ID", "Wunsch4_ID", "Wunsch5_ID", "Wunsch6_ID"]
+            }
         },
         "sportkurs": {
             "primary_key": ["ID", "int"],
@@ -17,14 +20,16 @@
                 ["Wochentag", "varchar(255)"],
                 ["ifMinAnzahlVorhanden", "bool"],
                 ["PlatzanzahlMAX", "int"]
-            ]
+            ],
+            "foreign_keys": {}
         },
         "sonderkurs": {
             "primary_key": ["ID", "int"],
             "columns": [
                 ["KursName", "varchar(255)"],
                 ["Wochentag", "varchar(255)"]
-            ]
+            ],
+            "foreign_keys": {}
         },
 
         
@@ -33,20 +38,20 @@
             "columns": [
                 ["Semester", "int"]
             ],
-            "connected_tables": [
-                "schueler",
-                "sportkurs"
-            ]
+            "foreign_keys": {
+                "schueler": ["schueler_ID"],
+                "sportkurs": ["sportkurs_ID"]
+            }
         },
         "sonderkurse_zuteilung": {
             "primary_key": ["ID", "int"],
             "columns": [
                 ["Semester", "int"]
             ],
-            "connected_tables": [
-                "schueler",
-                "sonderkurs"
-            ]
+            "foreign_keys": {
+                "schueler": ["schueler_ID"],
+                "sonderkurs": ["sonderkurs_ID"]
+            }
         }
     }
 }
