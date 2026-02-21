@@ -58,9 +58,11 @@ for category in categorycell_map:
         continue
     pass  # error
 
+# determine range of data
 first_data_row = categories_row + 1  # one below categories row
 last_data_row = last_data_row_tuple[0].row  # get row idx of random cell in the row
 
+# generate a list of students with mapped attributes
 students = list()
 for row_idx in range(first_data_row, last_data_row+1):
     student_info = dict()
