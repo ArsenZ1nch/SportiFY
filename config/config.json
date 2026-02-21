@@ -1,42 +1,42 @@
 {
     "database_tables": {
         "schueler": {
-            "primary_key": ["ID", "int"],
-            "columns": [
-                ["VorName", "varchar(255)"],
-                ["NachName", "varchar(255)"]
+            "primary_key": ["ID", "INTEGER"],
+            "attributes": [
+                ["VorName", "TEXT"],
+                ["NachName", "TEXT"]
             ],
             "foreign_keys": {
                 "sportkurs": ["Wunsch1_ID", "Wunsch2_ID", "Wunsch3_ID", "Wunsch4_ID", "Wunsch5_ID", "Wunsch6_ID"]
             }
         },
         "sportkurs": {
-            "primary_key": ["ID", "int"],
-            "columns": [
-                ["KursName", "varchar(255)"],
-                ["Sporthalle", "varchar(255)"],
-                ["Lehrkraft", "varchar(255)"],
-                ["Themenfeld", "varchar(255)"],
-                ["Wochentag", "varchar(255)"],
-                ["ifMinAnzahlVorhanden", "bool"],
-                ["PlatzanzahlMAX", "int"]
+            "primary_key": ["ID", "INTEGER"],
+            "attributes": [
+                ["KursName", "TEXT"],
+                ["Sporthalle", "TEXT"],
+                ["Lehrkraft", "TEXT"],
+                ["Themenfeld", "TEXT"],
+                ["Wochentag", "TEXT"],
+                ["ifMinAnzahlVorhanden", "INTEGER"],
+                ["PlatzanzahlMAX", "INTEGER"]
             ],
             "foreign_keys": {}
         },
         "sonderkurs": {
-            "primary_key": ["ID", "int"],
-            "columns": [
-                ["KursName", "varchar(255)"],
-                ["Wochentag", "varchar(255)"]
+            "primary_key": ["ID", "INTEGER"],
+            "attributes": [
+                ["KursName", "TEXT"],
+                ["Wochentag", "TEXT"]
             ],
             "foreign_keys": {}
         },
 
         
         "sportkurse_zuteilung": {
-            "primary_key": ["ID", "int"],
-            "columns": [
-                ["Semester", "int"]
+            "primary_key": ["ID", "INTEGER"],
+            "attributes": [
+                ["Semester", "INTEGER"]
             ],
             "foreign_keys": {
                 "schueler": ["schueler_ID"],
@@ -44,9 +44,9 @@
             }
         },
         "sonderkurse_zuteilung": {
-            "primary_key": ["ID", "int"],
-            "columns": [
-                ["Semester", "int"]
+            "primary_key": ["ID", "INTEGER"],
+            "attributes": [
+                ["Semester", "INTEGER"]
             ],
             "foreign_keys": {
                 "schueler": ["schueler_ID"],

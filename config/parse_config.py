@@ -8,6 +8,9 @@ class Configuration:
 
         self.map = parsed_config  # whole map
         self.database_tables = parsed_config["database_tables"]  # DB tables
+    
+
+default_config = Configuration()
 
 
 if __name__ == "__main__":
