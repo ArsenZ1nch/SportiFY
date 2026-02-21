@@ -2,6 +2,7 @@ import json
 import sqlite3
 
 
+# const paths
 DATABASE_PATH = "database/database.db"
 CONFIG_PATH = "config/config.json"
 
