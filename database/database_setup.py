@@ -56,8 +56,7 @@ for table_name in database_tables:
     sql_table_command += ");"
 
     # EXECUTE SQL query
-    # database_cursor.execute(sql_table_command)
-    print(sql_table_command)
+    database_cursor.execute(sql_table_command)
 
 
 if __name__ == "__main__":
