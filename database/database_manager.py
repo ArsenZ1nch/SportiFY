@@ -21,7 +21,7 @@ class Column:
             raise TypeError(f"can't have autoincrement with {datatype} datatype")
         if ifForeignKey and not (foreign_table_name and foreign_column_name):  # check if all required information for foreign key given
             raise Exception("column set as foreign key, but connected table and/or name of connected column not given")
-        if (foreign_table_name or foreign_column_name) and not ifForeignKey:  # check if not redundant foreign key information given
+        if ifForeignKey and (foreign_table_name or foreign_column_name):  # check if not redundant foreign key information given
             raise Exception("column not set as foreign key, but connected table and/or name of connected column given")
 
 class PrimaryKey(Column):
@@ -31,6 +31,12 @@ class PrimaryKey(Column):
 class ForeignKey(Column):
     def __init__(self, name, datatype, ifNotNull = False, foreign_table_name = None, foreign_column_name = None):
         super().__init__(name=name, datatype=datatype, ifNotNull=ifNotNull, ifForeignKey=True, foreign_table_name=foreign_table_name, foreign_column_name=foreign_column_name)
+
+
+class AttributeList:
+    def __init__(self, column: Column, value_list: list):
+        self.column = column
+        self.value_list = value_list
 
 
 class DataBase(sqlite3.Cursor):
@@ -97,9 +103,47 @@ class DataBase(sqlite3.Cursor):
         # add all queries
         sql_query += ", ".join(queries)
         # finish sql_query
-        sql_query += ")"
+        sql_query += ");"
 
         self.execute(sql_query)
+
+    def insert_values(self, table_name: str, values: list[AttributeList]):
+        # check if rows amount consistant over all attribute lists
+        rows_amount = len(values[0].value_list)  # amount of rows
+        for attribute_list in values[1:]:
+            if len(attribute_list.value_list) != rows_amount:
+                raise Exception(f"amount of rows not consistend in every attribute list: {attribute_list}")
+            
+        sql_query = f"INSERT INTO {table_name} "
+
+        # get column names of values
+        column_names = list()
+        for attribute_list in values:
+            column_names.append(attribute_list.column.name)
+        # convert column names to query
+        sql_query += ", ".join(column_names)
+        # finish column names
+        sql_query += ") VALUES "
+
+        rows_queries = list()
+        for row_idx in range(rows_amount):
+            row_query = "("
+
+            row_values = list()
+            for attribute_list in values:
+                # append value to the current row
+                # TODO: comments
+                value_query = f"'{attribute_list.value_list[row_idx]}'"
+                row_values.append(value_query)
+            row_query += ", ".join(row_values)
+
+            row_query += ")"
+            rows_queries.append(row_query)
+
+        sql_query += ", ".join(rows_queries)
+        sql_query += ";"
+    
+        print(sql_query)
 
 
 
@@ -113,3 +157,9 @@ if __name__ == "__main__":
 
     test_db.create_table("sportkurs", sportkurs_columns)
     test_db.create_table("schueler", schueler_columns)
+
+    names_list = AttributeList("vorname", ["Arsenii", "Andreas", "Markus"])
+    lnames_list = AttributeList("nachname", ["Soeder", "Scholz", "Trump"])
+    wunsch_list = AttributeList("wunschID", [3, 6, None])
+
+    test_db.insert_values("schueler", values=[names_list, lnames_list, wunsch_list])
