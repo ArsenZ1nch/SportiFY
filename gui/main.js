@@ -12,7 +12,6 @@ const modalBody = document.getElementById("modalBody");
 const modalClose = document.getElementById("modalClose");
 const titlebar = document.getElementById("titlebar");
 const minBtn = document.getElementById("minBtn");
-const maxBtn = document.getElementById("maxBtn");
 const closeBtn = document.getElementById("closeBtn");
 const externalBtn = document.getElementById("externalBtn");
 const externalMenu = document.getElementById("externalMenu");
@@ -99,13 +98,7 @@ titlebar.addEventListener("mousedown", (event) => {
     }
     backend.windowStartDrag();
 });
-// doppelklick fuer Fenster vollbild/kleinbild
-titlebar.addEventListener("dblclick", () => {
-    if (!backendReady) {
-        return;
-    }
-    backend.windowToggleMaximize();
-});
+
 
 minBtn.addEventListener("click", () => {
     if (backendReady) {
@@ -113,11 +106,7 @@ minBtn.addEventListener("click", () => {
     }
 });
 
-maxBtn.addEventListener("click", () => {
-    if (backendReady) {
-        backend.windowToggleMaximize();
-    }
-});
+
 
 closeBtn.addEventListener("click", () => {
     if (backendReady) {
