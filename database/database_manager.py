@@ -1,9 +1,39 @@
 import sqlite3
 
 
-class DataBase(sqlite3.Cursor):
+class Column:
     DATATYPES = ["INTEGER", "REAL", "TEXT", "BLOB"]
 
+    def __init__(self, name: str, datatype: str, ifNotNull: bool = False, ifPrimaryKey: bool = False, ifAutoIncrement: bool = False, ifForeignKey: bool = False, foreign_table_name: str = None, foreign_column_name: str = None):
+        self.name = name
+        self.datatype = datatype
+        self.ifNotNull = ifNotNull
+        self.ifPrimaryKey = ifPrimaryKey
+        self.ifAutoIncrement = ifAutoIncrement
+        self.ifForeignKey = ifForeignKey
+        self.connected_table = foreign_table_name
+        self.connected_column = foreign_column_name
+
+        # check if inputs valid
+        if datatype not in Column.DATATYPES:  # check if datatype is valid
+            raise TypeError(f"invalid datatype: '{datatype}', select from {Column.DATATYPES}")
+        if (ifAutoIncrement) and (datatype != "INTEGER"):  # check if autoincrement valid
+            raise TypeError(f"can't have autoincrement with {datatype} datatype")
+        if ifForeignKey and not (foreign_table_name and foreign_column_name):  # check if all required information for foreign key given
+            raise Exception("column set as foreign key, but connected table and/or name of connected column not given")
+        if (foreign_table_name or foreign_column_name) and not ifForeignKey:  # check if not redundant foreign key information given
+            raise Exception("column not set as foreign key, but connected table and/or name of connected column given")
+
+class PrimaryKey(Column):
+    def __init__(self, name = "ID", datatype = "INTEGER", ifNotNull = True, ifAutoIncrement = True):
+        super().__init__(name=name, datatype=datatype, ifNotNull=ifNotNull, ifPrimaryKey=True, ifAutoIncrement=ifAutoIncrement)
+
+class ForeignKey(Column):
+    def __init__(self, name, datatype, ifNotNull = False, foreign_table_name = None, foreign_column_name = None):
+        super().__init__(name=name, datatype=datatype, ifNotNull=ifNotNull, ifForeignKey=True, foreign_table_name=foreign_table_name, foreign_column_name=foreign_column_name)
+
+
+class DataBase(sqlite3.Cursor):
     def __init__(self, db_path: str) -> None:
         self.path = db_path
         super().__init__(sqlite3.connect(db_path))
@@ -41,19 +71,45 @@ class DataBase(sqlite3.Cursor):
             out = out.fetchall()
         return out
     
-    def create_table(self, table_name, table_structure):
-        query = f"CREATE TABLE {table_name} ("
+    def create_table(self, table_name: str, columns: list[Column]):
+        sql_query = f"CREATE TABLE {table_name} ("
 
-        columns = list()
-        for column_name in table_structure:
-            datatype, ifNotNull, ifPrimaryKey = table_structure["datatype"], table_structure["ifNotNull"], table_structure["ifPrimaryKey"]
-            column_query = f"{column_name} {datatype}"
-            if ifNotNull: column_query += "NOT NULL"
-            if ifPrimaryKey: column_query += "PRIMARY KEY AUTOINCREMENT"
-            # TODO
+        queries = list()  # queries for creating a column
+        fk_constraint_queries = list()  # queries for creating foreign key constraints
+        for column in columns:
+            # SQL query: "NAME DATATYPE ..."
+            column_query = f"{column.name} {column.datatype}"
+            if column.ifNotNull:
+                column_query += " NOT NULL"
+            if column.ifPrimaryKey:
+                column_query += " PRIMARY KEY"  # SQL query: "... PRIMARY KEY ..."
+            if column.ifAutoIncrement:
+                column_query += " AUTOINCREMENT"  # SQL query: "... AUTOINCREMENT"
+            queries.append(column_query)
+
+            # add foreign key constraints
+            if column.ifForeignKey:
+                constraint_query = f"FOREIGN KEY ({column.name}) REFERENCES {column.connected_table}({column.connected_column})"
+                fk_constraint_queries.append(constraint_query)
+        
+        # combine columns and foreign key constraint queries
+        queries.extend(fk_constraint_queries)
+        # add all queries
+        sql_query += ", ".join(queries)
+        # finish sql_query
+        sql_query += ")"
+
+        self.execute(sql_query)
 
 
 
 if __name__ == "__main__":
     test_db = DataBase("test/test.db")
-    print(test_db.tables)
+
+    schueler_columns = [PrimaryKey(), Column("vorname", "TEXT", True), Column("nachname", "TEXT"), ForeignKey("wunschID", "INTEGER", foreign_table_name="sportkurs", foreign_column_name="ID")]
+    sportkurs_columns = [PrimaryKey(), Column("name", "TEXT", True), Column("sporthalle", "TEXT", True)]
+
+    test_db.reset()
+
+    test_db.create_table("sportkurs", sportkurs_columns)
+    test_db.create_table("schueler", schueler_columns)
