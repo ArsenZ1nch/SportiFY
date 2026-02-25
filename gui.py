@@ -16,16 +16,17 @@ class MainWindow(QMainWindow):
         self.resize(1000, 600) # wenn kleiner dann scheiße weil notifications unten und es sieht goofy ahh aus
         self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint) # wichtig frameless sonst ricvhtig arsch
         self.setAttribute(Qt.WA_TranslucentBackground, True)
-        self.setStyleSheet("background: transparent;")
+        # self.setStyleSheet("background: transparent;")
 
         self.backend = backend
         if hasattr(self.backend, "set_window"):
             self.backend.set_window(self)
 
         self.view = QWebEngineView()
-        self.view.setAttribute(Qt.WA_TranslucentBackground, True)
+        # self.view.setAttribute(Qt.WA_TranslucentBackground, True)
         self.view.page().setBackgroundColor(QColor(0, 0, 0, 0))
         self.setCentralWidget(self.view)
+        
 
         # Keep a strong reference to the channel; otherwise it can be GC'd ## war im stackoverflow code drinne
         # and the JS side never gets the backend object.
