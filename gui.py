@@ -1,6 +1,6 @@
 import json
 import os
-# from sportColors import Colors as sportColors
+from sportColors import Colors as sportColors
 
 from PySide6.QtWidgets import QMainWindow
 from PySide6.QtWebEngineWidgets import QWebEngineView
@@ -10,8 +10,8 @@ from PySide6.QtGui import QColor
 
 
 
-# print(sportColors.WARNING + "Skia Fehler ignorieren, ist für JavaScript Fallback kacke aber wir nehmen das nicht" + sportColors.ENDC)
-# print(sportColors.BLUE + "Vorerst auch JS Permissions-Policy ignorieren" + sportColors.ENDC)
+print(sportColors.WARNING + "Skia Fehler ignorieren, ist für JavaScript Fallback kacke aber wir nehmen das nicht" + sportColors.ENDC)
+print(sportColors.BLUE + "Vorerst auch JS Permissions-Policy ignorieren" + sportColors.ENDC)
 
 class MainWindow(QMainWindow):
 
