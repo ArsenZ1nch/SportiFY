@@ -1,10 +1,15 @@
 import sqlite3
 
 
+# Column and subclasses
+'''
+Column class
+'''
 class Column:
-    DATATYPES = ["INTEGER", "REAL", "TEXT", "BLOB"]
+    DATATYPES = ["INTEGER", "REAL", "TEXT", "BLOB"]  # valid datatypes
 
-    def __init__(self, name: str, datatype: str, ifNotNull: bool = False, ifPrimaryKey: bool = False, ifAutoIncrement: bool = False, ifForeignKey: bool = False, foreign_table_name: str = None, foreign_column_name: str = None):
+    # no constraints given by default
+    def __init__(self, name: str, datatype: str, ifNotNull: bool = False, ifPrimaryKey: bool = False, ifAutoIncrement: bool = False, ifForeignKey: bool = False, foreign_table_name: str = None, foreign_column_name: str = None) -> None:
         self.name = name
         self.datatype = datatype
         self.ifNotNull = ifNotNull
@@ -16,41 +21,111 @@ class Column:
 
         # check if inputs valid
         if datatype not in Column.DATATYPES:  # check if datatype is valid
-            raise TypeError(f"invalid datatype: '{datatype}', select from {Column.DATATYPES}")
+            raise TypeError(f"column '{name}':  invalid datatype: '{datatype}', select from {Column.DATATYPES}")
+        
         if (ifAutoIncrement) and (datatype != "INTEGER"):  # check if autoincrement valid
-            raise TypeError(f"can't have autoincrement with {datatype} datatype")
+            raise TypeError(f"column '{name}':  can't have autoincrement with {datatype} datatype")
+        
         if ifForeignKey and not (foreign_table_name and foreign_column_name):  # check if all required information for foreign key given
-            raise Exception("column set as foreign key, but connected table and/or name of connected column not given")
-        if not ifForeignKey and (foreign_table_name or foreign_column_name):  # check if not redundant foreign key information given
-            raise Exception("column not set as foreign key, but connected table and/or name of connected column given")
+            raise Exception(f"column '{name}':  set as foreign key, but connected table and/or name of connected column not given")
+        if not ifForeignKey and (foreign_table_name or foreign_column_name):  # check if no redundant foreign key information given
+            raise Exception(f"column '{name}':  not set as foreign key, but connected table and/or name of connected column given")
 
+# special column types
+'''
+Primary Key column
+'''
 class PrimaryKey(Column):
-    def __init__(self, name = "ID", datatype = "INTEGER", ifNotNull = True, ifAutoIncrement = True):
+    # default PK is assumed to be "ID INTEGER NOT NULL AUTOINCREMENT"
+    def __init__(self, name: str = "ID", datatype: str = "INTEGER", ifNotNull: bool = True, ifAutoIncrement: bool = True) -> None:
         super().__init__(name=name, datatype=datatype, ifNotNull=ifNotNull, ifPrimaryKey=True, ifAutoIncrement=ifAutoIncrement)
 
+'''
+Foreign Key column
+'''
 class ForeignKey(Column):
-    def __init__(self, name, datatype, ifNotNull = False, foreign_table_name = None, foreign_column_name = None):
+    # default FK assumed to accept NULL. AUTOINCREMENT not possible
+    def __init__(self, name: str, datatype: str, ifNotNull: bool = False, foreign_table_name: str = None, foreign_column_name: str = None) -> None:
         super().__init__(name=name, datatype=datatype, ifNotNull=ifNotNull, ifForeignKey=True, foreign_table_name=foreign_table_name, foreign_column_name=foreign_column_name)
 
 
+'''
+Array of values for a particular column (vertical) 
+!!! NOT A ROW / DATA TUPLE (horizontal) !!!
+For INSERTABLE horizontal data entries see DataRows
+'''
+class ColumnData:
+    def __init__(self, column: Column, values: list) -> None:
+        self.column = column
+        self.values = tuple(values)
+
+
+'''
+Array of data rows (horizontal form)
+Made for easy INSERT
+Index of a value inside of its row is index of the corresponding column in self.columns
+'''
+class DataMatrix:
+    def __init__(self, *column_data_array: ColumnData) -> None:
+        # check if amount of given values (=> amount of rows) consistant across every ColumnValueList
+        rows_amount = len(column_data_array[0].values)
+        for column_data in column_data_array[1:]:
+            if len(column_data.values) != rows_amount:
+                raise Exception(f"amount of rows not consistant in every attribute list: {column_data} of {column_data.column.name}")
+
+        # combine data of all columns
+        columns = list()  # list of columns
+        column_data_values_array = list()  # list of all .values attributes of ColumnData instances (=> 2d array: column_data_values_array[column_data.values])
+        for column_data in column_data_array:
+            columns.append(column_data.column)
+            column_data_values_array.append(column_data.values)
+        
+        # spread column data onto rows
+        data_rows = zip(*column_data_values_array)  # unpack array into arguments with *
+        
+        self.columns = tuple(columns)  # array of columns => fixed amount
+        self.data_rows = list(data_rows)  # flexible array of data rows => flexible amount
+
+
+'''
+Database Table
+'''
 class DBTable:
-    def __init__(self, name: str, columns: list[Column] = []):
+    def __init__(self, name: str, columns: list[Column] = []) -> None:
         self.name = name
-        # map column names and column instances
-        self.column_map = dict()
+
+        self.column_map = dict()  # map column names to instances if given. otherwise just create dict
         for column in columns:
             self.column_map[column.name] = column
     
-    def fetch_column(self, column_name: str) -> Column:
-        return self.column_map[column_name]
+    # check if valid column name or instance given and return instance. raises exception if validity check failed
+    # TODO: Ask Hr Stresing about validy of such syntax (calling private method outside)
+    def _verify_column(self, column: Column | str) -> Column:
+        ifInstance: bool
+        # check whether column is an instance or name
+        if isinstance(column, Column):  # instance
+            column_name = column.name
+            ifInstance = True
+        else:  # name
+            column_name = column
+            ifInstance = False
+
+        expected_instance = self.fetch_column(column_name=column_name)  # column instance mapped in the table structure, or None if not found
+        if not expected_instance:  # column name not in DB structure
+            raise Exception(f"Column '{column_name}' not in the table '{self.name}'")
+        elif ifInstance and (expected_instance != column):  # table name in DB structure but instance is different
+            raise Exception(f"Wrong Column instance given (expected {expected_instance}, but got {column})")
+
+        return expected_instance
+    
+    # fetch a column from the table by name, return None if not found
+    def fetch_column(self, column_name: str) -> Column | None:
+        return self.column_map.get(column_name)
 
 
-class AttributeList:
-    def __init__(self, column_name: Column, value_list: tuple):
-        self.column = column_name
-        self.value_list = value_list
-
-
+'''
+Database
+'''
 class DataBase(sqlite3.Cursor):
     def __init__(self, db_path: str) -> None:
         self.path = db_path
@@ -92,9 +167,24 @@ class DataBase(sqlite3.Cursor):
                     )
                 table.column_map[fk_name] = foreign_key_column  # update the column in the map
 
-    # fetch table based on the name
-    def fetch_table(self, table_name: str) -> DBTable:
-        return self.table_map[table_name]
+    # check if valid table name or instance given and return instance. raises exception if validity check failed
+    def _verify_table(self, table: DBTable | str) -> DBTable:
+        ifInstance: bool
+        # check whether table is an instance or name
+        if isinstance(table, DBTable):  # instance
+            table_name = table.name
+            ifInstance = True
+        else:  # name
+            table_name = table
+            ifInstance = False
+
+        expected_instance = self.fetch_table(table_name=table_name)  # table instance mapped in the DB structure, or None if not found
+        if not expected_instance:  # table name not in DB structure
+            raise Exception(f"DBTable '{table_name}' not in the database '{self.path}'")
+        elif ifInstance and (expected_instance != table):  # table name in DB structure but instance is different
+            raise Exception(f"Wrong DBTable instance given (expected {expected_instance}, but got {table})")
+
+        return expected_instance
 
     # clears the database
     def reset(self) -> None:
@@ -102,21 +192,24 @@ class DataBase(sqlite3.Cursor):
             file.write("")
 
     # execute, but with an option to return the output
-    def execute(self, sql_query, ifReturnOutput = False, parameters = ()):
-        out = super().execute(sql_query, parameters)
+    def execute(self, sql_query: str, ifReturnOutput: bool = False) -> list | None:
+        super().execute(sql_query)
+        out = None
         if ifReturnOutput:
-            out = out.fetchall()
+            out = self.fetchall()
         return out
+
+    # fetch table based on the name, return None if not found
+    def fetch_table(self, table_name: str) -> DBTable | None:
+        return self.table_map.get(table_name)
     
-    def create_table(self, table_name: str, columns: list[Column]):
+    def create_table(self, table_name: str, columns: list[Column]) -> DBTable:
         # create instance of the table and add it to the table map
         table = DBTable(name=table_name)
         self.table_map[table_name] = table
 
-        sql_query = f"CREATE TABLE {table_name} ("
-
-        queries = list()  # queries for creating a column
-        fk_constraint_queries = list()  # queries for creating foreign key constraints
+        column_strings = list()  # strings for creating a column
+        fk_constraint_strings = list()  # strings for creating foreign key constraints
         for column in columns:
             # add column to the table
             table.column_map[column.name] = column
@@ -129,94 +222,130 @@ class DataBase(sqlite3.Cursor):
                 column_query += " PRIMARY KEY"  # SQL query: "... PRIMARY KEY ..."
             if column.ifAutoIncrement:
                 column_query += " AUTOINCREMENT"  # SQL query: "... AUTOINCREMENT"
-            queries.append(column_query)
+            column_strings.append(column_query)
 
             # add foreign key constraints
             if column.ifForeignKey:
-                constraint_query = f"FOREIGN KEY ({column.name}) REFERENCES {column.foreign_table_name}({column.foreign_column_name})"
-                fk_constraint_queries.append(constraint_query)
+                constraint_string = f"FOREIGN KEY ({column.name}) REFERENCES {column.foreign_table_name}({column.foreign_column_name})"
+                fk_constraint_strings.append(constraint_string)
         
         # combine columns and foreign key constraint queries
-        queries.extend(fk_constraint_queries)
+        column_strings.extend(fk_constraint_strings)
         # add all queries
-        sql_query += ", ".join(queries)
-        # finish sql_query
-        sql_query += ");"
+        columns_string = ", ".join(column_strings)
 
-        return self.execute(sql_query, ifReturnOutput=True)
+        sql_query = f"CREATE TABLE {table_name} ({columns_string});"
+        self.execute(sql_query)
 
+        return table
 
-    def insert_values(self, table: DBTable, values: tuple[AttributeList]):
-        # check if rows amount consistant over all attribute lists
-        rows_amount = len(values[0].value_list)  # amount of rows
-        for attribute_list in values[1:]:
-            if len(attribute_list.value_list) != rows_amount:
-                raise Exception(f"amount of rows not consistant in every attribute list: {attribute_list}")
-            
-        sql_query = f"INSERT INTO {table.name} ("
+    def insert_values(self, table: DBTable | str, data_matrix: DataMatrix) -> None:  # parameter table accepts both DBTable instance and valid table name
+        table = self._verify_table(table=table)  # verify table validity
+        table_name = table.name
 
-        # get column names of values
-        column_names = list()
-        for attribute_list in values:
-            column_names.append(attribute_list.column.name)
-        # convert column names to query
-        sql_query += ", ".join(column_names)
-        # finish column names
-        sql_query += ") VALUES "
+        column_names = list(column.name for column in data_matrix.columns)  # list of column names
+        column_names_string = ", ".join(column_names)  # convert list of column names to a string
 
-        rows_queries = list()
-        for row_idx in range(rows_amount):
-            row_query = "("
-
-            row_values = list()
-            for attribute_list in values:
-                # append value to the current row
-                value = attribute_list.value_list[row_idx]
+        rows_strings = list()  # array of rows as strings
+        for row in data_matrix.data_rows:
+            values_strings = list()  # array of values from row as strings
+            for value, column in zip(row, data_matrix.columns):  # iterate over both arrays to also return column
+                value_string: str  # value converted to string
                 if value == None:  # convert python None to SQL null
-                    value_query = "null"
-                elif attribute_list.column.datatype == "TEXT":  # add '' in case text
-                    value_query = f"'{value}'"
+                    value_string = "null"
+                elif column.datatype == "TEXT":  # add ''
+                    value_string = f"'{value}'"
                 else:
-                    value_query = f"{value}"
-                row_values.append(value_query)
-
-            row_query += ", ".join(row_values)
-
-            row_query += ")"
-            rows_queries.append(row_query)
-
-        sql_query += ", ".join(rows_queries)
-        sql_query += ";"
+                    value_string = f"{value}"
+                values_strings.append(value_string)
+            values_string = ", ".join(values_strings)  # convert list of value strings to a string
+            row_string = f"({values_string})"  # put the values into brackets, fulfill row string
+            rows_strings.append(row_string)
+        data_string = ", ".join(rows_strings)  # convert list of row strings to a string
+                
+        sql_query = f"INSERT INTO {table_name} ({column_names_string}) VALUES {data_string};"
+        self.execute(sql_query)
     
-        return self.execute(sql_query, ifReturnOutput=True)
+    def singleSelect(self, table: DBTable, columns_list: list[Column], ifDistinct: bool = False) -> list:
+        return self.complexSelect(table_array=[table], columns_list_array=[columns_list], ifDistinct=ifDistinct)
 
+    def complexSelect(self, table_array: list[DBTable] | list[str] = [], columns_list_array: list[list[Column] | list[str]] = [], ifDistinct: bool = False) -> list:  # idx of DBTable has to equal to idx of corresponding columns list
+        # TODO: add functionality like WHERE constraint or *
+        # validate input
+        # check if all * selected
+        tables_amount = len(table_array)
+        # TODO: check if all tables selected
+        # check if arguments are of correct data type
+        if (not isinstance(table_array, list)) or (not isinstance(columns_list_array, list)):
+            raise Exception("Wrong data type of argument(s). table_array should be a list and columns_list_array should be a 2d list")
+        # check length consistency
+        if tables_amount != len(columns_list_array):
+            raise Exception(f"Length of table_array ({len(table_array)}) doesn't match length of columns_list_array ({len(columns_list_array)})")
+        
+        # verify tables and columns
+        for idx in range(tables_amount):
+            table = table_array[idx]  # access table
+            table_instance = self._verify_table(table=table)  # get table instance
+            table_array[idx] = table_instance  # replace unknown type of table with table instance
+
+            columns_list = columns_list_array[idx]  # access columns list
+            column_instances_list = list(table_instance._verify_column(column=column) for column in columns_list)  # create list with column instances
+            columns_list_array[idx] = column_instances_list  # replace list of columns with unknown type with lists of confirmed column instances
+
+        table_names_list = list()  # list of tables as strings / table names
+        column_strings_list = list()  # list of columns as strings
+        for table, columns_list in zip(table_array, columns_list_array):
+            table_names_list.append(table.name)
+            # record strings in the 'table.column' format
+            for column in columns_list:
+                column_string = f"{table.name}.{column.name}"
+                column_strings_list.append(column_string)
+        
+        table_names_string = ", ".join(table_names_list)
+        columns_string = ", ".join(column_strings_list)
+
+        distinct_constraint_string = ""
+        if ifDistinct:
+            distinct_constraint_string = "DISTINCT "
+
+        # construct sql query
+        sql_query = f"SELECT {distinct_constraint_string}{columns_string} FROM {table_names_string};"
+        return self.execute(sql_query=sql_query, ifReturnOutput=True)
+        
+        
 
 
 if __name__ == "__main__":
     test_db = DataBase("test/test.db")
-    test_db.reset()
+    # test_db.reset()
 
-    schueler_columns = [PrimaryKey(), Column("vorname", "TEXT", True), Column("nachname", "TEXT"), ForeignKey("wunschID", "INTEGER", foreign_table_name="sportkurs", foreign_column_name="ID")]
-    sportkurs_columns = [PrimaryKey(), Column("name", "TEXT", True), Column("sporthalle", "TEXT", False)]
+    # schueler_columns = [PrimaryKey(), Column("vorname", "TEXT", True), Column("nachname", "TEXT"), ForeignKey("wunschID", "INTEGER", foreign_table_name="sportkurs", foreign_column_name="ID")]
+    # sportkurs_columns = [PrimaryKey(), Column("name", "TEXT", True), Column("sporthalle", "TEXT", False)]
 
-    test_db.create_table("sportkurs", sportkurs_columns)
-    test_db.create_table("schueler", schueler_columns)
+    # test_db.create_table("sportkurs", sportkurs_columns)
+    # test_db.create_table("schueler", schueler_columns)
     
     schuler_table = test_db.fetch_table("schueler")
-    names_list = AttributeList(schuler_table.fetch_column("vorname"), ("Jonas", "Andreas", "Markus"))
-    lnames_list = AttributeList(schuler_table.fetch_column("nachname"), ("Soeder", "Merz", "Trump"))
-    wunsch_list = AttributeList(schuler_table.fetch_column("wunschID"), (3, 2, None))
+    # names_list = ColumnData(schuler_table.fetch_column("vorname"), ("Markus", "Friedrich", "Andreas"))
+    # lnames_list = ColumnData(schuler_table.fetch_column("nachname"), ("Soeder", "Merz", "Andreass"))
+    # wunsch_list = ColumnData(schuler_table.fetch_column("wunschID"), (3, 2, None))
 
     sportkurs_table = test_db.fetch_table("sportkurs")
-    sportkurs_name_list = AttributeList(sportkurs_table.fetch_column("name"), ("Jagd", "Glueckspiel", "Schach", "Motorsport"))
+    # sportkurs_name_list = ColumnData(sportkurs_table.fetch_column("name"), ("Jagd", "Glueckspiel", "Schach", "Motorsport"))
 
-    test_db.insert_values(sportkurs_table, values=[sportkurs_name_list])
-    test_db.insert_values(schuler_table, values=[names_list, lnames_list, wunsch_list])
+    # schuler_data = DataMatrix(names_list, lnames_list, wunsch_list)
+    # sportkurs_data = DataMatrix(sportkurs_name_list)
 
-    test_db.execute("SELECT schueler.vorname, schueler.nachname")
+
+    # test_db.insert_values("sportkurs", data_matrix=sportkurs_data)
+    # test_db.insert_values(schuler_table, data_matrix=schuler_data)
 
 
     # for table in test_db.table_map.values():
     #     print(table.column_map)
     #     for column in table.column_map.values():
     #         print(column, column.name, column.datatype, column.ifNotNull, column.ifPrimaryKey, column.ifAutoIncrement, column.ifForeignKey, column.foreign_table_name, column.foreign_column_name)
+
+    values = test_db.complexSelect()
+    print(values)
+    pass
