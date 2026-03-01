@@ -1,80 +1,392 @@
-/* ich tue garnicht so als ob ich das verstehe mehr */
+/* ========================================================
+   MPG SPORTIFY v2.0 – Redesigned UI
+   Premium dark-teal glassmorphism with vibrant cyan accents
+   ======================================================== */
+
+/* ---------- DESIGN TOKENS ---------- */
 :root {
-    --bg: #f3fbfb;
-    --panel: rgba(255, 255, 255, 0.72);
-    --panel-strong: rgba(255, 255, 255, 0.9);
-    --ink: #102a2a;
-    --muted: #5b7a7a;
-    --accent: #11c5c5;
-    --accent-2: #46e1e1;
-    --ok: #1fbf8f;
-    --warn: #f0b04f;
-    --err: #e97272;
-    --shadow: 0 18px 60px rgba(8, 20, 20, 0.12);
-    --radius: 18px;
+    --bg-deep:    #0a1214;
+    --bg-surface: #0f1c20;
+    --bg-card:    rgba(16, 32, 38, 0.65);
+    --bg-card-hover: rgba(20, 40, 48, 0.8);
+    --bg-glass:   rgba(255, 255, 255, 0.04);
+
+    --ink:        #e8f4f6;
+    --ink-muted:  #7a9da6;
+    --ink-faint:  #3d5c64;
+
+    --accent:     #00e5ff;
+    --accent-2:   #0fd9a0;
+    --accent-glow: rgba(0, 229, 255, 0.25);
+
+    --ok:         #0fd9a0;
+    --warn:       #f5b642;
+    --err:        #ff5c6c;
+
+    --border:     rgba(0, 229, 255, 0.1);
+    --border-hover: rgba(0, 229, 255, 0.25);
+
+    --shadow-sm:  0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md:  0 8px 32px rgba(0, 0, 0, 0.4);
+    --shadow-lg:  0 20px 60px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 40px rgba(0, 229, 255, 0.15);
+
+    --radius-sm:  8px;
+    --radius-md:  14px;
+    --radius-lg:  20px;
+    --radius-xl:  28px;
+
+    --font-main:  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono:  'JetBrains Mono', 'Fira Code', monospace;
+
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-med:  300ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-* {
+/* ---------- RESET ---------- */
+*, *::before, *::after {
     box-sizing: border-box;
-    -webkit-user-select: none;
-    user-select: none;
-}
-
-html,
-body {
     margin: 0;
     padding: 0;
+}
+
+html, body {
     height: 100%;
-    background: transparent;
+    background: var(--bg-deep);
     color: var(--ink);
-    font-family: "IBM Plex Sans", "Fira Sans", "Source Sans 3", "Segoe UI", sans-serif;
+    font-family: var(--font-main);
+    -webkit-user-select: none;
+    user-select: none;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 body {
     display: flex;
     align-items: stretch;
     justify-content: center;
-    overflow: hidden;
 }
 
+/* ============================================================
+   SPLASH SCREEN
+   ============================================================ */
+.splash {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-deep);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.splash.fade-out {
+    opacity: 0;
+    transform: scale(1.05);
+    pointer-events: none;
+}
+
+.splash.hidden {
+    display: none;
+}
+
+#splashCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.splash-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+}
+
+.splash-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+    animation: splashLogoIn 0.8s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes splashLogoIn {
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.splash-icon {
+    position: relative;
+}
+
+.splash-icon svg {
+    width: 72px;
+    height: 72px;
+    filter: drop-shadow(0 0 20px rgba(0, 229, 255, 0.4));
+}
+
+.splash-circle {
+    stroke-dasharray: 176;
+    stroke-dashoffset: 176;
+    animation: drawCircle 1s 0.5s ease forwards;
+}
+
+@keyframes drawCircle {
+    to { stroke-dashoffset: 0; }
+}
+
+.splash-check {
+    stroke-dasharray: 40;
+    stroke-dashoffset: 40;
+    animation: drawCheck 0.6s 1.2s ease forwards;
+}
+
+@keyframes drawCheck {
+    to { stroke-dashoffset: 0; }
+}
+
+.splash-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.splash-title {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.splash-sub {
+    font-size: 13px;
+    color: var(--ink-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.splash-loader {
+    width: 200px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    overflow: hidden;
+    opacity: 0;
+    animation: fadeUp 0.5s 0.8s ease forwards;
+}
+
+.splash-loader-bar {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    border-radius: 10px;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.splash-status {
+    font-size: 12px;
+    color: var(--ink-faint);
+    letter-spacing: 0.5px;
+    opacity: 0;
+    animation: fadeUp 0.5s 1s ease forwards;
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   MAIN APP
+   ============================================================ */
 .app {
     width: 100%;
     height: 100%;
-    margin: 0;
-    background: radial-gradient(1200px 600px at 10% -10%, rgba(233, 255, 255, 0.9) 0%, rgba(233, 255, 255, 0.35) 45%, transparent 65%),
-        linear-gradient(140deg, rgba(247, 255, 255, 0.95) 0%, rgba(239, 247, 247, 0.92) 55%, rgba(245, 251, 251, 0.95) 100%);
-    border: 1px solid rgba(17, 197, 197, 0.15);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
     border-radius: 22px;
-    backdrop-filter: blur(10px);
-    box-shadow: var(--shadow);
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    position: relative;
+    opacity: 0;
+    transform: scale(0.97);
+    transition: opacity 0.8s ease, transform 0.8s ease;
 }
 
+.app.visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Particle canvas */
+#particleCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Ambient glow orbs */
+.ambient-orb {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(80px);
+    opacity: 0.15;
+}
+
+.orb-1 {
+    width: 400px;
+    height: 400px;
+    background: var(--accent);
+    top: -120px;
+    left: -100px;
+    animation: orbFloat1 12s ease-in-out infinite;
+}
+
+.orb-2 {
+    width: 300px;
+    height: 300px;
+    background: var(--accent-2);
+    bottom: -80px;
+    right: -60px;
+    animation: orbFloat2 15s ease-in-out infinite;
+}
+
+.orb-3 {
+    width: 200px;
+    height: 200px;
+    background: var(--accent);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: orbFloat3 10s ease-in-out infinite;
+    opacity: 0.06;
+}
+
+@keyframes orbFloat1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, 20px) scale(1.05); }
+    66% { transform: translate(-15px, 10px) scale(0.95); }
+}
+
+@keyframes orbFloat2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(-20px, -15px) scale(0.95); }
+    66% { transform: translate(15px, -10px) scale(1.08); }
+}
+
+@keyframes orbFloat3 {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.3); }
+}
+
+/* ============================================================
+   TITLEBAR
+   ============================================================ */
 .titlebar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 10px 16px;
-    background: linear-gradient(90deg, rgba(17, 197, 197, 0.18), rgba(255, 255, 255, 0.6));
-    border-bottom: 1px solid rgba(16, 42, 42, 0.08);
+    background: rgba(15, 28, 32, 0.8);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 5;
 }
 
 .titlebar-left {
     display: flex;
     align-items: center;
-    gap: 12px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
+    gap: 10px;
 }
 
-.titlebar-left .dot {
-    width: 12px;
-    height: 12px;
+.logo-mark {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-pulse {
+    position: absolute;
+    inset: 0;
     border-radius: 50%;
-    background: linear-gradient(140deg, var(--accent), var(--accent-2));
-    box-shadow: 0 0 14px rgba(17, 197, 197, 0.7);
+    background: var(--accent);
+    opacity: 0;
+}
+
+/* Initial load: pulse exactly 3 times then stop */
+.logo-pulse.intro-pulse {
+    animation: logoPulseIntro 0.8s ease-in-out 3;
+}
+
+@keyframes logoPulseIntro {
+    0%, 100% { opacity: 0; transform: scale(0.8); }
+    50% { opacity: 0.25; transform: scale(1.5); }
+}
+
+/* Hover: continuous glow while hovering */
+.logo-mark:hover .logo-pulse {
+    animation: logoPulseHover 1.2s ease-in-out infinite;
+}
+
+.logo-mark:hover svg {
+    filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.5));
+    transform: rotate(8deg) scale(1.1);
+    transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+.logo-mark svg {
+    transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+@keyframes logoPulseHover {
+    0%, 100% { opacity: 0; transform: scale(0.9); }
+    50% { opacity: 0.3; transform: scale(1.6); }
+}
+
+.titlebar-title {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    color: var(--ink);
+}
+
+.titlebar-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(15, 217, 160, 0.15));
+    color: var(--accent);
+    border: 1px solid rgba(0, 229, 255, 0.2);
+    letter-spacing: 0.5px;
 }
 
 .window-controls {
@@ -83,321 +395,1111 @@ body {
 }
 
 .window-btn {
-    width: 30px;
-    height: 24px;
-    border-radius: 8px;
-    border: 1px solid rgba(16, 42, 42, 0.16);
-    background: rgba(255, 255, 255, 0.7);
-    color: var(--ink);
+    width: 32px;
+    height: 26px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg-glass);
+    color: var(--ink-muted);
     font-size: 14px;
     line-height: 1;
     cursor: pointer;
-    transition: background 0.2s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
 }
 
 .window-btn:hover {
+    color: var(--ink);
+    background: rgba(0, 229, 255, 0.1);
+    border-color: var(--border-hover);
     transform: translateY(-1px);
-    background: rgba(17, 197, 197, 0.2);
 }
 
 .window-btn.close:hover {
-    background: rgba(233, 114, 114, 0.2);
-    border-color: rgba(233, 114, 114, 0.6);
+    background: rgba(255, 92, 108, 0.15);
+    border-color: rgba(255, 92, 108, 0.4);
+    color: var(--err);
 }
 
+/* ============================================================
+   TOOLBAR
+   ============================================================ */
 .toolbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 22px;
-    border-bottom: 1px solid rgba(16, 42, 42, 0.08);
-    background: rgba(255, 255, 255, 0.6);
+    padding: 8px 16px;
+    background: rgba(15, 28, 32, 0.5);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 5;
 }
 
-/* TODO: brauchen wir navbar? es braucht viel platz im code und ist bisschen unnötig */
 .nav {
     display: flex;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+}
+
+.nav-indicator {
+    position: absolute;
+    height: 34px;
+    background: linear-gradient(135deg, rgba(0, 229, 255, 0.12), rgba(15, 217, 160, 0.08));
+    border: 1px solid rgba(0, 229, 255, 0.2);
+    border-radius: 10px;
+    transition: all var(--transition-med);
+    z-index: 0;
+    pointer-events: none;
+}
+
+.nav-btn {
+    position: relative;
+    z-index: 1;
+    border: none;
+    background: transparent;
+    color: var(--ink-muted);
+    font-family: var(--font-main);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 7px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color var(--transition-fast);
+    white-space: nowrap;
+}
+
+.nav-btn svg {
+    opacity: 0.6;
+    transition: opacity var(--transition-fast);
+}
+
+.nav-btn:hover {
+    color: var(--ink);
+}
+
+.nav-btn:hover svg {
+    opacity: 1;
+}
+
+.nav-btn.active {
+    color: var(--accent);
+}
+
+.nav-btn.active svg {
+    opacity: 1;
+}
+
+/* External Dropdown */
+.external-dropdown {
+    position: relative;
+    display: inline-flex;
+}
+
+.dropdown-trigger svg {
+    transition: transform var(--transition-fast);
+}
+
+.external-dropdown.open .dropdown-trigger svg {
+    transform: rotate(180deg);
+}
+
+.external-menu {
+    position: absolute;
+    left: 0;
+    top: calc(100% + 8px);
+    background: rgba(16, 32, 38, 0.95);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    min-width: 240px;
+    box-shadow: var(--shadow-lg), var(--shadow-glow);
+    z-index: 100;
+    overflow: hidden;
+
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+    pointer-events: none;
+    transition: all var(--transition-med);
+}
+
+.external-dropdown.open .external-menu {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.menu-header {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--ink-faint);
+    padding: 12px 14px 6px;
+}
+
+.external-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.external-item:hover {
+    background: rgba(0, 229, 255, 0.06);
+}
+
+.item-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-glass);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    flex-shrink: 0;
+    transition: all var(--transition-fast);
+}
+
+.external-item:hover .item-icon {
+    background: rgba(0, 229, 255, 0.1);
+    border-color: var(--border-hover);
+}
+
+.item-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.item-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.item-desc {
+    font-size: 11px;
+    color: var(--ink-faint);
+}
+
+.item-arrow {
+    color: var(--ink-faint);
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.external-item:hover .item-arrow {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Toolbar right / Status */
+.toolbar-right {
+    display: flex;
+    align-items: center;
     gap: 12px;
 }
 
-.nav button {
-    border: none;
-    background: transparent;
-    color: var(--muted);
-    font-size: 14px;
-    padding: 8px 14px;
+.status-chip {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 12px 5px 9px;
     border-radius: 999px;
-    cursor: default;
+    background: var(--bg-glass);
+    border: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-muted);
+    transition: all var(--transition-med);
 }
 
-.nav button.active {
-    background: rgba(17, 197, 197, 0.15);
-    color: var(--ink);
-    box-shadow: inset 0 0 0 1px rgba(17, 197, 197, 0.25);
+.status-chip.ready {
+    border-color: rgba(15, 217, 160, 0.3);
+    color: var(--ok);
 }
 
-.status {
-    font-size: 12px;
-    color: var(--muted);
-    padding: 6px 12px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(16, 42, 42, 0.08);
+.status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--warn);
+    animation: statusPulse 2s ease-in-out infinite;
+    flex-shrink: 0;
 }
 
-.content {
-    display: grid;
-    grid-template-columns: 1.2fr 0.8fr;
-    gap: 18px;
-    padding: 22px;
-    flex: 1;
+.status-chip.ready .status-dot {
+    background: var(--ok);
+    box-shadow: 0 0 8px rgba(15, 217, 160, 0.4);
 }
 
-.card {
-    background: var(--panel-strong);
-    border-radius: var(--radius);
-    border: 1px solid rgba(16, 42, 42, 0.08);
-    padding: 22px;
-    box-shadow: 0 8px 30px rgba(12, 24, 24, 0.08);
+@keyframes statusPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* ============================================================
+   SETTINGS TRIGGER BUTTON
+   ============================================================ */
+.settings-trigger {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg-glass);
+    color: var(--ink-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
     position: relative;
+}
+
+.settings-trigger svg {
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.settings-trigger:hover {
+    color: var(--accent);
+    background: rgba(0, 229, 255, 0.08);
+    border-color: var(--border-hover);
+}
+
+.settings-trigger:hover svg {
+    transform: rotate(60deg);
+}
+
+.settings-trigger.active {
+    color: var(--accent);
+    background: rgba(0, 229, 255, 0.12);
+    border-color: rgba(0, 229, 255, 0.3);
+}
+
+.settings-trigger.active svg {
+    transform: rotate(180deg);
+}
+
+/* ============================================================
+   SETTINGS PANEL
+   ============================================================ */
+.settings-panel {
+    position: absolute;
+    right: 16px;
+    top: calc(100% + 8px);
+    width: 300px;
+    background: var(--bg-card);
+    backdrop-filter: blur(30px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg), var(--shadow-glow);
+    z-index: 200;
     overflow: hidden;
-    animation: rise 0.6s ease both;
+    opacity: 100%;
+
+    /* Closed state */
+    opacity: 0;
+    transform: translateY(-12px) scale(0.92);
+    transform-origin: top right;
+    pointer-events: none;
+    transition: opacity 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+                transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* bitte feedback für animation, ich finde eigentlich doof aber mehr kann ich nd machen hab nicht so viel skill*/
-/* das ist der EFFEKT BEIM START NICHT BUTTONS oder sowas */
-@keyframes rise {
-    from {
-        transform: translateY(12px);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
+.settings-panel.open {
+    opacity: 100% !important;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
 }
 
-.headline {
+.settings-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 16px 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+    border-bottom: 1px solid var(--border);
+}
+
+.settings-header svg {
+    color: var(--accent);
+}
+
+.settings-group {
+    padding: 10px 16px 12px;
+}
+
+.settings-group + .settings-group {
+    border-top: 1px solid var(--border);
+}
+
+.settings-group-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--ink-faint);
+    margin-bottom: 10px;
+}
+
+.settings-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 14px;
+    gap: 12px;
+    padding: 8px 0;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast);
 }
 
-h1 {
-    font-size: 26px;
-    margin: 0;
+.settings-row:hover {
+    background: rgba(0, 229, 255, 0.03);
+}
+
+.settings-row-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.settings-row-title {
+    font-size: 13px;
     font-weight: 600;
+    color: var(--ink);
 }
 
-.sub {
-    font-size: 14px;
-    color: var(--muted);
-    margin-bottom: 18px;
+.settings-row-desc {
+    font-size: 11px;
+    color: var(--ink-faint);
 }
 
-.actions {
+/* ---------- Toggle Switch ---------- */
+.toggle {
+    flex-shrink: 0;
+}
+
+.toggle-track {
+    width: 40px;
+    height: 22px;
+    border-radius: 99px;
+    background: var(--ink-faint);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.toggle.active .toggle-track {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow: 0 0 12px rgba(0, 229, 255, 0.3);
+}
+
+.toggle-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.toggle.active .toggle-thumb {
+    transform: translateX(18px);
+    box-shadow: 0 1px 8px rgba(0, 229, 255, 0.4);
+}
+
+/* ============================================================
+   CONTENT
+   ============================================================ */
+.content {
     display: grid;
-    gap: 16px;
+    grid-template-columns: 1.25fr 0.75fr;
+    gap: 18px;
+    padding: 18px;
+    flex: 1;
+    position: relative;
+    z-index: 1;
+    min-height: 0;
 }
 
-.action-row {
+/* ---------- Cards ---------- */
+.card {
+    position: relative;
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    padding: 22px;
+    overflow: hidden;
+    transition: all var(--transition-med);
+
+    /* Staggered entrance */
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.app.visible .card {
+    animation: cardEnter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.app.visible .card-main {
+    animation-delay: 0.1s;
+}
+
+.app.visible .card-notif {
+    animation-delay: 0.25s;
+}
+
+@keyframes cardEnter {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.card:hover {
+    border-color: var(--border-hover);
+    box-shadow: var(--shadow-glow);
+}
+
+.card-glow {
+    position: absolute;
+    top: -1px;
+    left: 20%;
+    right: 20%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), var(--accent-2), transparent);
+    opacity: 0;
+    transition: opacity var(--transition-med);
+}
+
+.card:hover .card-glow {
+    opacity: 0.6;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.card-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: var(--ink);
+}
+
+.card-label {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, rgba(0, 229, 255, 0.12), rgba(15, 217, 160, 0.08));
+    color: var(--accent);
+    border: 1px solid rgba(0, 229, 255, 0.15);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.card-desc {
+    font-size: 13px;
+    color: var(--ink-muted);
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+/* Notification counter */
+.notif-counter {
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: rgba(0, 229, 255, 0.15);
+    color: var(--accent);
+    border: 1px solid rgba(0, 229, 255, 0.2);
+    font-family: var(--font-mono);
+    transition: all var(--transition-bounce);
+}
+
+.notif-counter.pop {
+    animation: counterPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes counterPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+/* ---------- Action Buttons ---------- */
+.actions-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
+    margin-bottom: 20px;
 }
 
-/* TODO: vielleicht etwas mehr reusen und nicht alles kopieren, bisschen viel code für nix */
+.btn {
+    position: relative;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    font-family: var(--font-main);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all var(--transition-fast);
+    outline: none;
+}
 
-button.primary {
+.btn-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-ripple {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+/* Primary button */
+.btn-primary {
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
     color: #062424;
-    font-weight: 600;
-    border: none;
-    border-radius: 14px;
-    padding: 14px 18px;
-    font-size: 15px;
-    cursor: pointer;
-    box-shadow: 0 10px 20px rgba(17, 197, 197, 0.25);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 20px rgba(0, 229, 255, 0.2);
 }
 
-button.primary:hover:enabled {
+.btn-shine {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.btn-primary:hover:enabled .btn-shine {
+    animation: btnShine 0.6s ease;
+}
+
+@keyframes btnShine {
+    to { left: 150%; }
+}
+
+.btn-primary:hover:enabled {
     transform: translateY(-2px);
-    box-shadow: 0 14px 24px rgba(17, 197, 197, 0.32);
+    box-shadow: 0 8px 30px rgba(0, 229, 255, 0.35);
 }
 
-button.primary:disabled {
-    opacity: 0.6;
+.btn-primary:active:enabled {
+    transform: translateY(0);
+    box-shadow: 0 2px 12px rgba(0, 229, 255, 0.2);
+}
+
+.btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: saturate(0.5);
+}
+
+/* Ghost button */
+.btn-ghost {
+    background: var(--bg-glass);
+    border: 1px solid var(--border);
+    color: var(--ink);
+}
+
+.btn-ghost:hover:enabled {
+    border-color: var(--border-hover);
+    background: rgba(0, 229, 255, 0.06);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-ghost:active:enabled {
+    transform: translateY(0);
+}
+
+.btn-ghost:disabled {
+    opacity: 0.4;
     cursor: not-allowed;
 }
 
-/* hab schon vergessen wo */
-button.ghost {
-    background: transparent;
-    border: 1px solid rgba(16, 42, 42, 0.2);
-    color: var(--ink);
-    border-radius: 14px;
-    padding: 14px 18px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: border 0.2s ease, transform 0.2s ease;
+/* Ripple effect */
+.ripple-circle {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(0);
+    animation: rippleOut 0.6s ease forwards;
+    pointer-events: none;
 }
 
-button.ghost:hover:enabled {
-    border-color: rgba(17, 197, 197, 0.6);
-    transform: translateY(-1px);
+@keyframes rippleOut {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
 }
 
-.info-grid {
-    display: grid;
-    gap: 10px;
-    margin-top: 12px;
-}
-
-.info-chip {
-    padding: 10px 12px;
-    border-radius: 12px;
-    background: rgba(17, 197, 197, 0.08);
-    color: var(--muted);
-    font-size: 13px;
-}
-
-.notifications {
+/* ---------- Info Cards ---------- */
+.info-cards {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
+}
+
+.info-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-glass);
+    border: 1px solid transparent;
+    font-size: 12px;
+    color: var(--ink-muted);
+    line-height: 1.5;
+    transition: all var(--transition-fast);
+}
+
+.info-card:hover {
+    background: rgba(0, 229, 255, 0.04);
+    border-color: var(--border);
+}
+
+.info-card code {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    background: rgba(0, 229, 255, 0.1);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--accent);
+}
+
+.info-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: rgba(0, 229, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+.info-card.special {
+    background: linear-gradient(135deg, rgba(0, 229, 255, 0.06), rgba(15, 217, 160, 0.04));
+    border: 1px solid rgba(0, 229, 255, 0.1);
+}
+
+.info-card.special .info-icon {
+    background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(15, 217, 160, 0.1));
+}
+
+/* ---------- Notifications Panel ---------- */
+.card-notif {
+    display: flex;
+    flex-direction: column;
 }
 
 .notif-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    max-height: 420px;
-    overflow: auto;
-    padding-right: 6px;
+    gap: 8px;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
+    min-height: 0;
 }
 
+/* Scrollbar */
+.notif-list::-webkit-scrollbar {
+    width: 5px;
+}
+
+.notif-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.notif-list::-webkit-scrollbar-thumb {
+    background: var(--ink-faint);
+    border-radius: 10px;
+}
+
+.notif-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 40px 0;
+    color: var(--ink-faint);
+    font-size: 13px;
+}
+
+/* Individual notification */
 .notif {
     position: relative;
     padding: 12px 14px;
-    padding-right: 42px;
-    border-radius: 12px;
-    border-left: 4px solid var(--accent);
-    background: rgba(16, 42, 42, 0.04);
-    animation: fadeIn 0.25s ease;
+    padding-right: 38px;
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--accent);
+    background: var(--bg-glass);
     font-size: 13px;
+    color: var(--ink-muted);
     -webkit-user-select: text;
     user-select: text;
+    animation: notifSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: background var(--transition-fast), border-color var(--transition-fast);
 }
+
+@keyframes notifSlideIn {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.notif:hover {
+    background: rgba(0, 229, 255, 0.04);
+}
+
+.notif.success { border-left-color: var(--ok); }
+.notif.warning { border-left-color: var(--warn); }
+.notif.error   { border-left-color: var(--err); }
 
 .notif-text {
     -webkit-user-select: text;
     user-select: text;
+    line-height: 1.5;
 }
 
 .notif-delete {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 8px;
+    right: 8px;
     width: 22px;
     height: 22px;
-    border-radius: 8px;
+    border-radius: 6px;
     border: none;
-    background: rgba(16, 42, 42, 0.08);
-    color: var(--ink);
-    font-size: 12px;
+    background: transparent;
+    color: var(--ink-faint);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s ease;
     cursor: pointer;
+    transition: all var(--transition-fast);
 }
 
 .notif:hover .notif-delete {
     opacity: 1;
     pointer-events: auto;
-    transform: translateY(-1px);
 }
 
-.notif.success {
-    border-left-color: var(--ok);
+.notif-delete:hover {
+    background: rgba(255, 92, 108, 0.15);
+    color: var(--err);
 }
 
-.notif.warning {
-    border-left-color: var(--warn);
+/* Notification remove animation */
+.notif.removing {
+    animation: notifRemove 0.3s ease forwards;
 }
 
-.notif.error {
-    border-left-color: var(--err);
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(6px);
-    }
-
+@keyframes notifRemove {
     to {
-        opacity: 1;
-        transform: translateY(0);
+        opacity: 0;
+        transform: translateX(20px) scale(0.95);
+        height: 0;
+        padding: 0;
+        margin: 0;
     }
 }
 
-.modal {
+/* ============================================================
+   MODAL
+   ============================================================ */
+.modal-overlay {
     position: fixed;
     inset: 0;
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(10, 20, 20, 0.35);
-    backdrop-filter: blur(4px);
-    z-index: 10;
+    background: rgba(10, 18, 20, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-med);
 }
 
-.modal.active {
-    display: flex;
-    animation: fadeIn 0.2s ease;
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .modal-card {
-    background: white;
-    padding: 22px 24px;
-    border-radius: 16px;
-    min-width: 280px;
-    max-width: 420px;
-    box-shadow: var(--shadow);
+    background: rgba(16, 32, 38, 0.95);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border);
+    padding: 28px;
+    border-radius: var(--radius-lg);
+    min-width: 320px;
+    max-width: 440px;
+    box-shadow: var(--shadow-lg), var(--shadow-glow);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+
+    transform: scale(0.9) translateY(20px);
+    transition: transform var(--transition-bounce);
+}
+
+.modal-overlay.active .modal-card {
+    transform: scale(1) translateY(0);
+}
+
+.modal-icon {
+    margin-bottom: 4px;
+}
+
+.modal-icon svg {
+    filter: drop-shadow(0 0 12px rgba(0, 229, 255, 0.3));
 }
 
 .modal-card h3 {
-    margin: 0 0 8px 0;
-    font-size: 18px;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.3px;
 }
 
 .modal-card p {
-    margin: 0 0 16px 0;
-    color: var(--muted);
     font-size: 14px;
+    color: var(--ink-muted);
+    line-height: 1.6;
+    margin-bottom: 4px;
 }
 
-.modal-card button {
+.modal-btn {
     width: 100%;
+    margin-top: 4px;
 }
 
+/* ============================================================
+   FOOTER
+   ============================================================ */
 .footer {
-    font-size: 12px;
-    color: var(--muted);
-    text-align: right;
-    padding: 10px 22px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 22px 14px;
+    position: relative;
+    z-index: 1;
 }
 
+.footer-text, .footer-version {
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.3px;
+}
+
+.footer-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--ink-faint);
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
 @media (max-width: 900px) {
     .content {
         grid-template-columns: 1fr;
     }
 
-    .action-row {
+    .actions-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* ============================================================
+   LIGHT MODE
+   ============================================================ */
+html.light {
+    --bg-deep:    #eef5f6;
+    --bg-surface: #f5fafa;
+    --bg-card:    rgba(255, 255, 255, 0.75);
+    --bg-card-hover: rgba(255, 255, 255, 0.9);
+    --bg-glass:   rgba(0, 0, 0, 0.03);
+
+    --ink:        #0f2b2e;
+    --ink-muted:  #4a7078;
+    --ink-faint:  #8aabb3;
+
+    --accent:     #0bb8cc;
+    --accent-2:   #0dbf8f;
+    --accent-glow: rgba(11, 184, 204, 0.2);
+
+    --ok:         #0dbf8f;
+    --warn:       #e5a830;
+    --err:        #e06060;
+
+    --border:     rgba(11, 184, 204, 0.15);
+    --border-hover: rgba(11, 184, 204, 0.35);
+
+    --shadow-sm:  0 2px 8px rgba(0, 0, 0, 0.06);
+    --shadow-md:  0 8px 32px rgba(0, 0, 0, 0.08);
+    --shadow-lg:  0 20px 60px rgba(0, 0, 0, 0.1);
+    --shadow-glow: 0 0 40px rgba(11, 184, 204, 0.1);
+}
+
+html.light body {
+    background: var(--bg-deep);
+}
+
+html.light .splash {
+    background: var(--bg-deep);
+}
+
+html.light .titlebar {
+    background: rgba(245, 250, 250, 0.85);
+}
+
+html.light .toolbar {
+    background: rgba(245, 250, 250, 0.6);
+}
+
+html.light .external-menu {
+    background: rgba(255, 255, 255, 0.95);
+}
+
+html.light .settings-panel {
+    background: rgba(255, 255, 255, 0.92);
+    opacity: 100%;
+}
+
+html.light .modal-card {
+    background: rgba(255, 255, 255, 0.95);
+}
+
+html.light .btn-primary {
+    color: #fff;
+}
+
+html.light .ripple-circle {
+    background: rgba(0, 0, 0, 0.12);
+}
+
+html.light .ambient-orb {
+    opacity: 0.08;
+}
+
+html.light .toggle-track {
+    background: #c0d0d4;
+}
+
+html.light .toggle-thumb {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+html.light .splash-title {
+    -webkit-text-fill-color: transparent;
+}
+
+/* ============================================================
+   REDUCED MOTION / NO ANIMATIONS
+   ============================================================ */
+html.no-animations,
+html.no-animations *,
+html.no-animations *::before,
+html.no-animations *::after {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+}
+
+html.no-animations .ambient-orb {
+    display: none;
+}
+
+html.no-animations .splash {
+    display: none !important;
+}
+
+html.no-animations .app {
+    opacity: 1 !important;
+    transform: none !important;
+}
+
+html.no-animations .card {
+    opacity: 1 !important;
+    transform: none !important;
+}
+
+/* ============================================================
+   NO PARTICLES
+   ============================================================ */
+html.no-particles #particleCanvas {
+    display: none;
 }

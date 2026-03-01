@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="de">
 
@@ -7,112 +6,305 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
     <title>Sportify</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="./tyle.css">
-    <style>
-        /* moved css to external file */
-        .external-dropdown{position:relative;display:inline-flex;align-items:center}
-        .external-menu{position:absolute;right:0;top:36px;background:#fff;color:#111;border:1px solid rgba(0,0,0,0.08);box-shadow:0 6px 18px rgba(0,0,0,0.08);display:none;min-width:200px;border-radius:6px;overflow:hidden;z-index:30}
-        .external-item{padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:8px}
-        .external-item:hover{background:#f6f6f6}
-        /* checkmarks removed */
-        .external-dropdown.open .external-menu{display:block}
-    </style>
 </head>
 
 <body>
-    <div class="app">
+
+    <!-- ========== SPLASH SCREEN ========== -->
+    <div class="splash" id="splash">
+        <canvas id="splashCanvas"></canvas>
+        <div class="splash-content">
+            <div class="splash-logo" id="splashLogo">
+                <div class="splash-icon">
+                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                        <circle cx="32" cy="32" r="28" stroke="url(#grad1)" stroke-width="3" fill="none" class="splash-circle"/>
+                        <path d="M22 32 L28 26 L34 34 L42 22" stroke="url(#grad1)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" class="splash-check"/>
+                        <defs>
+                            <linearGradient id="grad1" x1="0" y1="0" x2="64" y2="64">
+                                <stop offset="0%" stop-color="#00e5ff"/>
+                                <stop offset="100%" stop-color="#0fd9a0"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="splash-text">
+                    <span class="splash-title">MPG Sportify</span>
+                    <span class="splash-sub">Sportkurswahl-System</span>
+                </div>
+            </div>
+            <div class="splash-loader">
+                <div class="splash-loader-bar" id="splashBar"></div>
+            </div>
+            <div class="splash-status" id="splashStatus">Initialisiere...</div>
+        </div>
+    </div>
+
+    <!-- ========== MAIN APP ========== -->
+    <div class="app" id="app">
+        <!-- Particle background -->
+        <canvas id="particleCanvas"></canvas>
+
+        <!-- Ambient glow orbs -->
+        <div class="ambient-orb orb-1"></div>
+        <div class="ambient-orb orb-2"></div>
+        <div class="ambient-orb orb-3"></div>
+
+        <!-- Titlebar -->
         <header class="titlebar" id="titlebar">
             <div class="titlebar-left">
-                <span class="dot"></span>
-                MPG Sportify
-            </div>
-            <!-- SVG From Bootstrap Icons https://icons.getbootstrap.com/?q=minim -->
-
-            <div class="window-controls">
-                <button class="window-btn" id="minBtn">
-                    _
-                </button>
-                <button class="window-btn close" id="closeBtn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                        class="bi bi-x-lg" viewBox="0 0 16 16">
-                        <path
-                            d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z" />
+                <div class="logo-mark">
+                    <div class="logo-pulse"></div>
+                    <svg width="20" height="20" viewBox="0 0 64 64" fill="none">
+                        <circle cx="32" cy="32" r="28" stroke="url(#grad2)" stroke-width="4" fill="none"/>
+                        <path d="M22 32 L28 26 L34 34 L42 22" stroke="url(#grad2)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        <defs>
+                            <linearGradient id="grad2" x1="0" y1="0" x2="64" y2="64">
+                                <stop offset="0%" stop-color="#00e5ff"/>
+                                <stop offset="100%" stop-color="#0fd9a0"/>
+                            </linearGradient>
+                        </defs>
                     </svg>
+                </div>
+                <span class="titlebar-title">MPG Sportify</span>
+                <span class="titlebar-badge">neu</span>
+            </div>
+            <div class="window-controls">
+                <button class="window-btn minimize" id="minBtn" aria-label="Minimize">
+                    <svg width="12" height="12" viewBox="0 0 12 12"><rect y="5" width="12" height="2" rx="1" fill="currentColor"/></svg>
+                </button>
+                <button class="window-btn close" id="closeBtn" aria-label="Close">
+                    <svg width="12" height="12" viewBox="0 0 12 12"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
                 </button>
             </div>
         </header>
-        <!-- nav/toolbar -->
+
+        <!-- Toolbar -->
         <div class="toolbar">
-            <nav class="nav"> <!-- maybe we should remove this wierd stuff, idk why I added it in the first place -->
-                <button class="active">Zuteilung</button>
-                <button>Kurse</button>
-                <button>Übersicht</button>
-                
-                <div class="external-dropdown">
-                    <button class="active" id="externalBtn">Öffnen ▾</button>
+            <nav class="nav" id="navBar">
+                <div class="nav-indicator" id="navIndicator"></div>
+                <button class="nav-btn active" data-tab="zuteilung">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    Zuteilung
+                </button>
+                <button class="nav-btn" data-tab="kurse">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>
+                    Kurse
+                </button>
+                <button class="nav-btn" data-tab="uebersicht">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 12V6l4-4 4 4v6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 12V9h4v3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Uebersicht
+                </button>
+
+                <div class="external-dropdown" id="externalDropdown">
+                    <button class="nav-btn dropdown-trigger" id="externalBtn">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Oeffnen
+                    </button>
                     <div id="externalMenu" class="external-menu">
-                        <div class="external-item" data-key="itslearning">MPG itsLearning</div>
-                        <div class="external-item" data-key="webuntis">MPG WebUntis</div>
+                        <div class="menu-header">Externe Tools</div>
+                        <div class="external-item" data-key="itslearning">
+                            <div class="item-icon">
+                                <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M2 3h12v10H2z" stroke="currentColor" stroke-width="1.2"/><path d="M2 6h12" stroke="currentColor" stroke-width="1.2"/></svg>
+                            </div>
+                            <div class="item-content">
+                                <span class="item-title">MPG itsLearning</span>
+                                <span class="item-desc">Lernplattform oeffnen</span>
+                            </div>
+                            <svg class="item-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        </div>
+                        <div class="external-item" data-key="webuntis">
+                            <div class="item-icon">
+                                <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.2"/><path d="M2 6h12M6 6v8M10 6v8" stroke="currentColor" stroke-width="1.2"/></svg>
+                            </div>
+                            <div class="item-content">
+                                <span class="item-title">MPG WebUntis</span>
+                                <span class="item-desc">Stundenplan ansehen</span>
+                            </div>
+                            <svg class="item-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        </div>
                     </div>
                 </div>
-                <!-- maybe we should remove especially this wierd stuff, idk why I added it in the first place -->
             </nav>
-            <!-- tis is indeed working but we should remove for production :-) -->
-                <div style="display:flex;align-items:center;gap:12px;">
 
-                <div class="status" id="statusChip">Backend: wartet…</div>
+            <div class="toolbar-right">
+                <button class="settings-trigger" id="settingsBtn" aria-label="Einstellungen">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <circle cx="9" cy="9" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+                        <path d="M9 1.5v2M9 14.5v2M1.5 9h2M14.5 9h2M3.3 3.3l1.4 1.4M13.3 13.3l1.4 1.4M3.3 14.7l1.4-1.4M13.3 4.7l1.4-1.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <div class="status-chip" id="statusChip">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Backend: wartet...</span>
+                </div>
+            </div>
+
+            <!-- Settings Panel -->
+            <div class="settings-panel" id="settingsPanel">
+                <div class="settings-header">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <circle cx="9" cy="9" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+                        <path d="M9 1.5v2M9 14.5v2M1.5 9h2M14.5 9h2M3.3 3.3l1.4 1.4M13.3 13.3l1.4 1.4M3.3 14.7l1.4-1.4M13.3 4.7l1.4-1.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                    </svg>
+                    <span>Einstellungen</span>
+                </div>
+
+                <div class="settings-group">
+                    <div class="settings-group-label">Darstellung</div>
+                    <div class="settings-row" id="settingTheme">
+                        <div class="settings-row-info">
+                            <span class="settings-row-title">Light Mode</span>
+                            <span class="settings-row-desc">Helles Farbschema verwenden</span>
+                        </div>
+                        <div class="toggle" id="toggleTheme">
+                            <div class="toggle-track">
+                                <div class="toggle-thumb"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <div class="settings-group-label">Verhalten</div>
+                    <div class="settings-row" id="settingAnimations">
+                        <div class="settings-row-info">
+                            <span class="settings-row-title">Animationen</span>
+                            <span class="settings-row-desc">UI-Animationen und Effekte</span>
+                        </div>
+                        <div class="toggle active" id="toggleAnimations">
+                            <div class="toggle-track">
+                                <div class="toggle-thumb"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-row" id="settingSounds">
+                        <div class="settings-row-info">
+                            <span class="settings-row-title">Sounds</span>
+                            <span class="settings-row-desc">Benachrichtigungston bei Modals</span>
+                        </div>
+                        <div class="toggle active" id="toggleSounds">
+                            <div class="toggle-track">
+                                <div class="toggle-thumb"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-row" id="settingParticles">
+                        <div class="settings-row-info">
+                            <span class="settings-row-title">Partikel</span>
+                            <span class="settings-row-desc">Hintergrund-Partikeleffekt</span>
+                        </div>
+                        <div class="toggle active" id="toggleParticles">
+                            <div class="toggle-track">
+                                <div class="toggle-thumb"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <!-- main view -->
-        <main class="content">
-            <section class="card">
-                <div class="headline">
-                    <h1>Sportkurswahl</h1>
-                </div>
-                <div class="sub">Laden Sie hier die Sportkurswahl als PDF oder Excel hoch, sodass die automatische
-                    Zuteilung anlaufen kann...</div>
 
-                <div class="actions">
-                    <div class="action-row">
-                        <button class="primary" id="assignBtn" disabled>Zuteilen</button>
-                        <button class="ghost" id="uploadBtn" disabled>Datei importieren (Excel/PDF)</button>
+        <!-- Main Content -->
+        <main class="content">
+            <!-- Left Panel: Actions -->
+            <section class="card card-main" id="cardMain">
+                <div class="card-glow"></div>
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <h1 class="card-title">Sportkurswahl</h1>
+                        <span class="card-label">Automatische Zuteilung</span>
                     </div>
-                    <div class="info-grid">
-                        <div class="info-chip">Hinweis: Dateien werden im Projektordner `temp_uploads/` gespeichert.
+                </div>
+                <p class="card-desc">Laden Sie hier die Sportkurswahl als PDF oder Excel hoch, sodass die automatische Zuteilung anlaufen kann.</p>
+
+                <div class="actions-grid">
+                    <button class="btn btn-primary" id="assignBtn" disabled>
+                        <span class="btn-content">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 10l5 5L17 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span>Zuteilen</span>
+                        </span>
+                        <span class="btn-ripple"></span>
+                        <span class="btn-shine"></span>
+                    </button>
+                    <button class="btn btn-ghost" id="uploadBtn" disabled>
+                        <span class="btn-content">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 3v10M6 7l4-4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 14v2a1 1 0 001 1h12a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                            <span>Datei importieren</span>
+                        </span>
+                        <span class="btn-ripple"></span>
+                    </button>
+                </div>
+
+                <div class="info-cards">
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M6 8l2 2 2-2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M3 11v2h10v-2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </div>
-                        <div class="info-chip">Demo: Die Zuteilung simuliert 5 Sekunden Rechenzeit. (Test von Modals und
-                            der PY/JS Schnittstelle)</div>
-                        <div class="info-chip">Andreas ist der deutsche König</div>
+                        <span>Dateien werden in <code>temp_uploads/</code> gespeichert.</span>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        </div>
+                        <span>Die Zuteilung simuliert 5 Sekunden Rechenzeit (Demo).</span>
+                    </div>
+                    <div class="info-card special">
+                        <div class="info-icon">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2l1.5 3 3.5.5-2.5 2.5.5 3.5L8 10l-3 1.5.5-3.5L3 5.5 6.5 5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+                        </div>
+                        <span>Andreas ist der deutsche Koenig</span>
                     </div>
                 </div>
             </section>
 
-            <section class="card notifications">
-                <div class="headline">
-                    <h1>Benachrichtigungen</h1>
+            <!-- Right Panel: Notifications -->
+            <section class="card card-notif" id="cardNotif">
+                <div class="card-glow"></div>
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <h1 class="card-title">Benachrichtigungen</h1>
+                        <span class="notif-counter" id="notifCounter">0</span>
+                    </div>
                 </div>
-                <div class="sub">Nachrichten aus dem Backend erscheinen hier.</div>
-                <div class="notif-list" id="notifList"></div>
+                <p class="card-desc">Nachrichten aus dem Backend erscheinen hier.</p>
+                <div class="notif-list" id="notifList">
+                    <div class="notif-empty" id="notifEmpty">
+                        <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="16" stroke="currentColor" stroke-width="1.5" opacity="0.3"/><path d="M14 20h12M20 14v12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/></svg>
+                        <span>Noch keine Nachrichten</span>
+                    </div>
+                </div>
             </section>
         </main>
 
-        <div class="footer">SportiFY Desktop UI, Version -6,7%</div>
-    </div>
-
-    <div class="modal" id="modal">
-        <div class="modal-card">
-            <h3 id="modalTitle">Hinweis</h3>
-            <p id="modalBody">...</p>
-            <button class="primary" id="modalClose">OK</button>
+        <!-- Footer -->
+        <div class="footer">
+            <span class="footer-text">SportiFY Desktop UI</span>
+            <span class="footer-dot"></span>
+            <span class="footer-version">Version -6,7%</span>
         </div>
     </div>
 
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal-card" id="modalCard">
+            <div class="modal-icon">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="12" stroke="url(#gradM)" stroke-width="2.5"/><path d="M11 16l3 3 7-7" stroke="url(#gradM)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="gradM" x1="4" y1="4" x2="28" y2="28"><stop offset="0%" stop-color="#00e5ff"/><stop offset="100%" stop-color="#0fd9a0"/></linearGradient></defs></svg>
+            </div>
+            <h3 id="modalTitle">Hinweis</h3>
+            <p id="modalBody">...</p>
+            <button class="btn btn-primary modal-btn" id="modalClose">
+                <span class="btn-content"><span>Verstanden</span></span>
+                <span class="btn-ripple"></span>
+                <span class="btn-shine"></span>
+            </button>
+        </div>
+    </div>
 
-    <script type="text/javascript" src="main.js"></script>
-
-    <script>
-
-    </script>
+    <audio id="jingleSound" preload="auto" src="./jingle.mp3"></audio>
+    <script type="text/javascript" src="./main.js"></script>
 </body>
 
 </html>

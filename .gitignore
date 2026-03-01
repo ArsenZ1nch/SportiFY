@@ -1,7 +1,12 @@
+# virtuelle Umgebungen
 .venv/
-**./venv
+venv/
 venv.bak/
-.pyc/
-**/.pyc
-*/__pycache__
-temp_uploads/*
+
+# Python‑Bytecode
+*.pyc
+__pycache__/
+
+# temporäre Uploads
+temp_uploads/
+sportColors.py
