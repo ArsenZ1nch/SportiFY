@@ -84,35 +84,8 @@ def get_student_info(worksheet: openpyxl.Workbook) -> dict:
 
 
 def fill_student_DB(database: DataBase, students_info: dict, config: Configuration) -> None:
-    students_DBtable = config.database_tables["schueler"]
-
-    # INITIALIZE sql query: insert values
-    sql_query = "INSERT INTO schueler ("
-    # APPEND to sql query: attributes of values
-    sql_query += ", ".join(attr[0] for attr in students_DBtable["attributes"])  # separates all attr names with a comma
-    # APPEND to sql query: initialize giving values
-    sql_query += ") VALUES "
-
-    # creates list of values to be added by rows
-    rows = list()
-    for student in students_info:
-        row_query = "("
-        attribute_values = list()
-        for attribute_name, _ in students_DBtable["attributes"]:  # attr datataype given to _
-            attribute_values.append(f"'{student[attribute_name]}'")
-        row_query += ", ".join(attribute_values)
-        row_query += ")"
-        rows.append(row_query)
-
-    # APPEND to sql query: attribute values
-    sql_query += ", ".join(rows)
-
-    # FINISH sql query:
-    sql_query += ";"
-
-    # EXECUTE sql query
-    database.execute(sql_query)
-    database.db_connection.commit()
+    # TODO write with DataBase
+    pass
 
 
 

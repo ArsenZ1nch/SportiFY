@@ -100,7 +100,7 @@ class DBTable:
     
     # check if valid column name or instance given and return instance. raises exception if validity check failed
     # TODO: Ask Hr Stresing about validy of such syntax (calling private method outside)
-    def _verify_column(self, column: Column | str) -> Column:
+    def _validate_column(self, column: Column | str) -> Column:
         ifInstance: bool
         # check whether column is an instance or name
         if isinstance(column, Column):  # instance
@@ -168,7 +168,7 @@ class DataBase(sqlite3.Cursor):
                 table.column_map[fk_name] = foreign_key_column  # update the column in the map
 
     # check if valid table name or instance given and return instance. raises exception if validity check failed
-    def _verify_table(self, table: DBTable | str) -> DBTable:
+    def _validate_table(self, table: DBTable | str) -> DBTable:
         ifInstance: bool
         # check whether table is an instance or name
         if isinstance(table, DBTable):  # instance
@@ -240,7 +240,7 @@ class DataBase(sqlite3.Cursor):
         return table
 
     def insert_values(self, table: DBTable | str, data_matrix: DataMatrix) -> None:  # parameter table accepts both DBTable instance and valid table name
-        table = self._verify_table(table=table)  # verify table validity
+        table = self._validate_table(table=table)  # verify table validity
         table_name = table.name
 
         column_names = list(column.name for column in data_matrix.columns)  # list of column names
@@ -269,47 +269,78 @@ class DataBase(sqlite3.Cursor):
     def singleSelect(self, table: DBTable, columns_list: list[Column], ifDistinct: bool = False) -> list:
         return self.complexSelect(table_array=[table], columns_list_array=[columns_list], ifDistinct=ifDistinct)
 
-    def complexSelect(self, table_array: list[DBTable] | list[str] = [], columns_list_array: list[list[Column] | list[str]] = [], ifDistinct: bool = False) -> list:  # idx of DBTable has to equal to idx of corresponding columns list
-        # TODO: add functionality like WHERE constraint or *
+    def complexSelect(self, table_array: list[DBTable] | list[str] = [], columns_list_array: list[list[Column] | list[str]] = [], ifDistinct: bool = False, **additional_constraints) -> list:  # idx of DBTable has to equal to idx of corresponding columns list
+        columns_string = ""  # fragment of sql query with selected columns
+
         # validate input
-        # check if all * selected
+        # check tables amount
         tables_amount = len(table_array)
         # TODO: check if all tables selected
         # check if arguments are of correct data type
         if (not isinstance(table_array, list)) or (not isinstance(columns_list_array, list)):
             raise Exception("Wrong data type of argument(s). table_array should be a list and columns_list_array should be a 2d list")
-        # check length consistency
-        if tables_amount != len(columns_list_array):
+        # length operations
+        if tables_amount == 0:  # check if tables given
+            raise Exception(f"No tables given")
+        if tables_amount == 1 and len(columns_list_array) == 0:  # check if * implied (only valid with one table)
+            columns_string = "*"
+
+            table = self._validate_table(table_array[0])
+            table_names_string = table.name
+
+        elif tables_amount != len(columns_list_array):  # check array length consistency of tables and the corresponding columns lists
             raise Exception(f"Length of table_array ({len(table_array)}) doesn't match length of columns_list_array ({len(columns_list_array)})")
         
-        # verify tables and columns
-        for idx in range(tables_amount):
-            table = table_array[idx]  # access table
-            table_instance = self._verify_table(table=table)  # get table instance
-            table_array[idx] = table_instance  # replace unknown type of table with table instance
+        # only find columns if not all implied
+        if not columns_string:
+            # verify tables and columns
+            for idx in range(tables_amount):
+                table = table_array[idx]  # access table
+                table_instance = self._validate_table(table=table)  # get table instance
+                table_array[idx] = table_instance  # replace unknown type of table with table instance
 
-            columns_list = columns_list_array[idx]  # access columns list
-            column_instances_list = list(table_instance._verify_column(column=column) for column in columns_list)  # create list with column instances
-            columns_list_array[idx] = column_instances_list  # replace list of columns with unknown type with lists of confirmed column instances
+                columns_list = columns_list_array[idx]  # access columns list
+                column_instances_list = list(table_instance._validate_column(column=column) for column in columns_list)  # create list with column instances
+                columns_list_array[idx] = column_instances_list  # replace list of columns with unknown type with lists of confirmed column instances
 
-        table_names_list = list()  # list of tables as strings / table names
-        column_strings_list = list()  # list of columns as strings
-        for table, columns_list in zip(table_array, columns_list_array):
-            table_names_list.append(table.name)
-            # record strings in the 'table.column' format
-            for column in columns_list:
-                column_string = f"{table.name}.{column.name}"
-                column_strings_list.append(column_string)
-        
-        table_names_string = ", ".join(table_names_list)
-        columns_string = ", ".join(column_strings_list)
+            table_names_list = list()  # list of tables as strings / table names
+            column_strings_list = list()  # list of columns as strings
+            for table, columns_list in zip(table_array, columns_list_array):
+                table_names_list.append(table.name)
+                # record strings in the 'table.column' format
+                for column in columns_list:
+                    column_string = f"{table.name}.{column.name}"
+                    column_strings_list.append(column_string)
+            
+            table_names_string = ", ".join(table_names_list)
+            columns_string = ", ".join(column_strings_list)
 
+        # check if there is a DISTINCT condition
         distinct_constraint_string = ""
         if ifDistinct:
             distinct_constraint_string = "DISTINCT "
 
+        # check if there is a WHERE condition
+        where_constraint_string = ""
+        where_constraint = additional_constraints.get("where_constraint")
+        if where_constraint:
+            where_constraint_string = f" WHERE {where_constraint}"
+
+        # check if there is an ORDER BY condition
+        orderby_constraint_string = ""
+        orderby_constraint = additional_constraints.get("orderby_constraint")
+        if orderby_constraint:
+            orderby_constraint_string = f" ORDER BY {orderby_constraint}"
+
+        # check if there is a LIMIT condition
+        limit_constraint_string = ""
+        limit_constraint = additional_constraints.get("limit_constraint")
+        if limit_constraint:
+            limit_constraint_string = f" LIMIT {limit_constraint}"
+
+
         # construct sql query
-        sql_query = f"SELECT {distinct_constraint_string}{columns_string} FROM {table_names_string};"
+        sql_query = f"SELECT {distinct_constraint_string}{columns_string} FROM {table_names_string}{where_constraint_string}{orderby_constraint_string}{limit_constraint_string};"
         return self.execute(sql_query=sql_query, ifReturnOutput=True)
         
         
@@ -346,6 +377,6 @@ if __name__ == "__main__":
     #     for column in table.column_map.values():
     #         print(column, column.name, column.datatype, column.ifNotNull, column.ifPrimaryKey, column.ifAutoIncrement, column.ifForeignKey, column.foreign_table_name, column.foreign_column_name)
 
-    values = test_db.complexSelect()
+    values = test_db.complexSelect(table_array=["sportkurs", schuler_table], columns_list_array=[["ID", "name"], ["ID", "vorname"]])
     print(values)
     pass
