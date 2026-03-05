@@ -93,27 +93,27 @@ Database Table
 class DBTable:
     def __init__(self, name: str, columns: list[Column] = []) -> None:
         self.name = name
-
+        self.primary_key = None
+        # create table structure
         self.column_map = dict()  # map column names to instances if given. otherwise just create dict
         for column in columns:
             self.column_map[column.name] = column
     
     # check if valid column name or instance given and return instance. raises exception if validity check failed
     # TODO: Ask Hr Stresing about validy of such syntax (calling private method outside)
-    def _validate_column(self, column: Column | str) -> Column:
-        ifInstance: bool
+    def _force_column(self, column: str | Column) -> Column:
         # check whether column is an instance or name
         if isinstance(column, Column):  # instance
             column_name = column.name
-            ifInstance = True
+            ifColumn = True
         else:  # name
             column_name = column
-            ifInstance = False
+            ifColumn = False
 
         expected_instance = self.fetch_column(column_name=column_name)  # column instance mapped in the table structure, or None if not found
         if not expected_instance:  # column name not in DB structure
             raise Exception(f"Column '{column_name}' not in the table '{self.name}'")
-        elif ifInstance and (expected_instance != column):  # table name in DB structure but instance is different
+        elif ifColumn and (expected_instance != column):  # table name in DB structure but instance is different
             raise Exception(f"Wrong Column instance given (expected {expected_instance}, but got {column})")
 
         return expected_instance
@@ -151,6 +151,7 @@ class DataBase(sqlite3.Cursor):
                 # check if primary key, add info on the column
                 if ifPrimaryKey:
                     column = PrimaryKey(name=column_name, datatype=datatype, ifNotNull=ifNotNull)  # autoincrement assumed to true for PKs, otherwise false
+                    table.primary_key = column
                 else:
                     column = Column(name=column_name, datatype=datatype, ifNotNull=ifNotNull)
                 table.column_map[column.name] = column  # map column instance to its name in the table instance
@@ -168,20 +169,19 @@ class DataBase(sqlite3.Cursor):
                 table.column_map[fk_name] = foreign_key_column  # update the column in the map
 
     # check if valid table name or instance given and return instance. raises exception if validity check failed
-    def _validate_table(self, table: DBTable | str) -> DBTable:
-        ifInstance: bool
+    def _force_table(self, table: str | DBTable) -> DBTable:
         # check whether table is an instance or name
         if isinstance(table, DBTable):  # instance
             table_name = table.name
-            ifInstance = True
+            ifTable = True
         else:  # name
             table_name = table
-            ifInstance = False
+            ifTable = False
 
         expected_instance = self.fetch_table(table_name=table_name)  # table instance mapped in the DB structure, or None if not found
         if not expected_instance:  # table name not in DB structure
             raise Exception(f"DBTable '{table_name}' not in the database '{self.path}'")
-        elif ifInstance and (expected_instance != table):  # table name in DB structure but instance is different
+        elif ifTable and (expected_instance != table):  # table name in DB structure but instance is different
             raise Exception(f"Wrong DBTable instance given (expected {expected_instance}, but got {table})")
 
         return expected_instance
@@ -240,7 +240,7 @@ class DataBase(sqlite3.Cursor):
         return table
 
     def insert_values(self, table: DBTable | str, data_matrix: DataMatrix) -> None:  # parameter table accepts both DBTable instance and valid table name
-        table = self._validate_table(table=table)  # verify table validity
+        table = self._force_table(table=table)  # verify table validity
         table_name = table.name
 
         column_names = list(column.name for column in data_matrix.columns)  # list of column names
@@ -266,46 +266,121 @@ class DataBase(sqlite3.Cursor):
         sql_query = f"INSERT INTO {table_name} ({column_names_string}) VALUES {data_string};"
         self.execute(sql_query)
     
-    def singleSelect(self, table: DBTable, columns_list: list[Column], ifDistinct: bool = False) -> list:
-        return self.complexSelect(table_array=[table], columns_list_array=[columns_list], ifDistinct=ifDistinct)
+    # select a single table
+    def single_select(self, table: str | list[str], columns_list: list[str] | list[Column] = [], **additional_constraints) -> list:
+        table_array = [table]  # put the table into a table
+        # check if "*" implied byt not giving columns
+        if columns_list:
+            columns_matrix = [columns_list]
+        else:
+            columns_matrix = []  # interpreted as *
 
-    def complexSelect(self, table_array: list[DBTable] | list[str] = [], columns_list_array: list[list[Column] | list[str]] = [], ifDistinct: bool = False, **additional_constraints) -> list:  # idx of DBTable has to equal to idx of corresponding columns list
-        columns_string = ""  # fragment of sql query with selected columns
+        return self.EDITTHISMETHOD(tables=table_array, main_columns=columns_matrix, **additional_constraints)
 
-        # validate input
-        # check tables amount
-        tables_amount = len(table_array)
-        # TODO: check if all tables selected
-        # check if arguments are of correct data type
-        if (not isinstance(table_array, list)) or (not isinstance(columns_list_array, list)):
-            raise Exception("Wrong data type of argument(s). table_array should be a list and columns_list_array should be a 2d list")
-        # length operations
-        if tables_amount == 0:  # check if tables given
-            raise Exception(f"No tables given")
-        if tables_amount == 1 and len(columns_list_array) == 0:  # check if * implied (only valid with one table)
-            columns_string = "*"
+    def _select(self, table_names_string: str, columns_string: str = "*", ifDistinct: bool = False, joins_string: str = None, where_constraint: str = None, orderby_constraint: str = None, limit_constraint: int = None) -> None:
+        # check if there is a DISTINCT condition
+        distinct_constraint_string = ""
+        if ifDistinct:
+            distinct_constraint_string = "DISTINCT "
 
-            table = self._validate_table(table_array[0])
-            table_names_string = table.name
+        # add space to joins_string if joins_string given
+        join_constraint_string = ""
+        if joins_string:
+            join_constraint_string = f" {joins_string}"
 
-        elif tables_amount != len(columns_list_array):  # check array length consistency of tables and the corresponding columns lists
-            raise Exception(f"Length of table_array ({len(table_array)}) doesn't match length of columns_list_array ({len(columns_list_array)})")
+        # check if there is a WHERE condition
+        where_constraint_string = ""
+        if where_constraint:
+            where_constraint_string = f" WHERE {where_constraint}"
+
+        # check if there is an ORDER BY condition
+        orderby_constraint_string = ""
+        if orderby_constraint:
+            orderby_constraint_string = f" ORDER BY {orderby_constraint}"
+
+        # check if there is a LIMIT condition
+        limit_constraint_string = ""
+        if limit_constraint:
+            limit_constraint_string = f" LIMIT {limit_constraint}"
+
+        # construct sql query
+        sql_query = f"SELECT {distinct_constraint_string}{columns_string} FROM {table_names_string}{join_constraint_string}{where_constraint_string}{orderby_constraint_string}{limit_constraint_string};"
+        print(sql_query)
+        # return self.execute(sql_query=sql_query, ifReturnOutput=True)
+
+    # TODO: make different selections use _select
+    def EDITTHISMETHOD(self, tables: list[str] | list[DBTable], main_columns: list[list[str] | list[Column]] = [], join_connections: list[tuple[str | ForeignKey, str | DBTable, list[str | Column]]] = [], **additional_constraints) -> list:  # idx of DBTable has to equal to idx of corresponding columns list
+        # reduce scope of arrays to local
+        tables_list = tables.copy()
+        columns_matrix = main_columns.copy()
+        join_connections = join_connections.copy()  # join_connections is a list with the structure: [(connectingFK, connectingTable, [foreign_column1, foreign_column2, ...]), ...]
+
+        # check if joining tables. '*' not supported
+        ifJoinTables = False
+        if join_connections:
+            ifJoinTables = True 
         
-        # only find columns if not all implied
-        if not columns_string:
-            # verify tables and columns
-            for idx in range(tables_amount):
-                table = table_array[idx]  # access table
-                table_instance = self._validate_table(table=table)  # get table instance
-                table_array[idx] = table_instance  # replace unknown type of table with table instance
+        # "*" not assumed by default
+        ifAllColumnsSelected = False
 
-                columns_list = columns_list_array[idx]  # access columns list
-                column_instances_list = list(table_instance._validate_column(column=column) for column in columns_list)  # create list with column instances
-                columns_list_array[idx] = column_instances_list  # replace list of columns with unknown type with lists of confirmed column instances
+
+        '''validate input'''
+        # verify arguments are of correct data type
+        if (not isinstance(tables_list, list)) or (not isinstance(columns_matrix, list)) or (not isinstance(join_connections, list)):
+            raise Exception("Wrong data type of argument(s). 'tables' should be a list, 'columns' should be a 2d list (matrix) and 'join_connections' should be a list")
+        
+        # verify table(s) given
+        tables_amount = len(tables_list)  # tables amount
+        if tables_amount == 0:
+            raise Exception(f"No tables given")
+        
+        # check if join select valid
+        if ifJoinTables:
+            # verify one table given
+            if tables_amount > 1:
+                raise Exception(f"Multiple tables given ({tables}) despite join_connections provided")
+            # check if structure correct
+            for idx, connection_tuple in enumerate(join_connections):
+                if not isinstance(connection_tuple, (tuple, list)):
+                    raise Exception(f"Incorrect type of a join_connections tuple at index {idx}: '{type(connection_tuple)}', while tuple expected")
+                if len(connection_tuple) != 3:
+                    raise Exception(f"Incorrect length of a join_connections tuple at index {idx}: {len(connection_tuple)}, while 3 expected")
+                elif not isinstance(connection_tuple[0], (str, ForeignKey)):
+                    raise Exception(f"1st item of a join_connections tuple at index {idx} is not a Foreign Key or its name")
+                elif not isinstance(connection_tuple[1], (str, DBTable)):
+                    raise Exception(f"2nd item of a join_connections tuple at index {idx} is not a DBTable or its name")
+                elif not isinstance(connection_tuple[2], list):
+                    raise Exception(f"3rd item of a join_connections tuple at index {idx} is not a list")
+            
+        
+        # check if all columns selection implied by omitting columns_matrix
+        elif tables_amount == 1 and len(columns_matrix) == 0:  # only valid with one table
+            ifAllColumnsSelected = True
+
+        # verify array length consistency of tables and the corresponding columns lists (if more than 1 table selected)
+        elif tables_amount != len(columns_matrix):
+            raise Exception(f"Length of table_array ({len(tables_list)}) doesn't match length of columns_list_array ({len(columns_matrix)})")
+        
+
+        '''parse tables and columns'''
+        if ifJoinTables:
+            pass
+
+
+        if not ifAllColumnsSelected:   # only find columns if not "*" implied
+            # force tables and columns if names given
+            for idx in range(tables_amount):
+                table = tables_list[idx]  # access table
+                table_instance = self._force_table(table=table)  # get table instance
+                tables_list[idx] = table_instance  # replace unknown type of table with table instance
+
+                columns_list = columns_matrix[idx]  # access columns list
+                column_instances_list = list(table_instance._force_column(column=column) for column in columns_list)  # create list with column instances
+                columns_matrix[idx] = column_instances_list  # replace list of columns with unknown type with lists of confirmed column instances
 
             table_names_list = list()  # list of tables as strings / table names
             column_strings_list = list()  # list of columns as strings
-            for table, columns_list in zip(table_array, columns_list_array):
+            for table, columns_list in zip(tables_list, columns_matrix):
                 table_names_list.append(table.name)
                 # record strings in the 'table.column' format
                 for column in columns_list:
@@ -314,9 +389,14 @@ class DataBase(sqlite3.Cursor):
             
             table_names_string = ", ".join(table_names_list)
             columns_string = ", ".join(column_strings_list)
+        else:
+            table_names_string = f"{tables_list[0].name}"
+            columns_string = "*"
 
+        '''check additional constraints'''
         # check if there is a DISTINCT condition
         distinct_constraint_string = ""
+        ifDistinct = additional_constraints.get("ifDistinct")
         if ifDistinct:
             distinct_constraint_string = "DISTINCT "
 
@@ -377,6 +457,5 @@ if __name__ == "__main__":
     #     for column in table.column_map.values():
     #         print(column, column.name, column.datatype, column.ifNotNull, column.ifPrimaryKey, column.ifAutoIncrement, column.ifForeignKey, column.foreign_table_name, column.foreign_column_name)
 
-    values = test_db.complexSelect(table_array=["sportkurs", schuler_table], columns_list_array=[["ID", "name"], ["ID", "vorname"]])
-    print(values)
+    values = test_db._select("schueler, sportkurs", "schueler.ID, sportkurs.ID", where_constraint="schueler.ID > 10", limit_constraint=10)
     pass
