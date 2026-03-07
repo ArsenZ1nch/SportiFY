@@ -1,7 +1,7 @@
 import json
 
 class Configuration:
-    def __init__(self, file_path: str = "config/config.json") -> None:
+    def __init__(self, file_path: str = "configuration/config.json") -> None:
         # parse config file
         with open(file_path) as config_file:
             parsed_config = json.load(config_file)

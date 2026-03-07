@@ -1,6 +1,6 @@
 import sys, os
 sys.path.append(os.getcwd())
-from config.parse_config import Configuration, default_config
+from configuration.config import Configuration, default_config
 from database.database_manager import DataBase
 import openpyxl
 

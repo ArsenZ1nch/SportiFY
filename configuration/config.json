@@ -2,7 +2,7 @@
     "database_tables": {
         "schueler": {
             "primary_key": ["ID", "INTEGER"],
-            "attributes": [
+            "columns": [
                 ["VorName", "TEXT"],
                 ["NachName", "TEXT"]
             ],
@@ -12,7 +12,7 @@
         },
         "sportkurs": {
             "primary_key": ["ID", "INTEGER"],
-            "attributes": [
+            "columns": [
                 ["KursName", "TEXT"],
                 ["Sporthalle", "TEXT"],
                 ["Lehrkraft", "TEXT"],
@@ -25,7 +25,7 @@
         },
         "sonderkurs": {
             "primary_key": ["ID", "INTEGER"],
-            "attributes": [
+            "columns": [
                 ["KursName", "TEXT"],
                 ["Wochentag", "TEXT"]
             ],
@@ -35,7 +35,7 @@
         
         "sportkurse_zuteilung": {
             "primary_key": ["ID", "INTEGER"],
-            "attributes": [
+            "columns": [
                 ["Semester", "INTEGER"]
             ],
             "foreign_keys": {
@@ -45,7 +45,7 @@
         },
         "sonderkurse_zuteilung": {
             "primary_key": ["ID", "INTEGER"],
-            "attributes": [
+            "columns": [
                 ["Semester", "INTEGER"]
             ],
             "foreign_keys": {
