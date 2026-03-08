@@ -1,0 +1,11 @@
+# virtuelle Umgebungen
+.venv/
+venv/
+venv.bak/
+
+# Python‑Bytecode
+*.pyc
+*/__pycache__/*
+
+# temporäre Uploads
+temp_uploads/

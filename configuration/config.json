@@ -4,7 +4,8 @@
             "primary_key": ["ID", "INTEGER"],
             "columns": [
                 ["VorName", "TEXT"],
-                ["NachName", "TEXT"]
+                ["NachName", "TEXT"],
+                ["Semester", "INTEGER"]
             ],
             "foreign_keys": {
                 "sportkurs": ["Wunsch1_ID", "Wunsch2_ID", "Wunsch3_ID", "Wunsch4_ID", "Wunsch5_ID", "Wunsch6_ID"]

@@ -9,7 +9,7 @@ class Column:
     DATATYPES = ["INTEGER", "REAL", "TEXT", "BLOB"]  # valid datatypes
 
     # no constraints given by default
-    def __init__(self, name: str, datatype: str, ifNotNull: bool = False, ifPrimaryKey: bool = False, ifAutoIncrement: bool = False, ifForeignKey: bool = False, foreign_table_name: str = None, foreign_column_name: str = None) -> None:
+    def __init__(self, name: str, datatype: str, ifNotNull: bool = False, ifPrimaryKey: bool = False, ifAutoIncrement: bool = False, ifForeignKey: bool = False, foreign_table_name: str = None, referenced_column_name: str = None) -> None:
         self.name = name
         self.datatype = datatype
         self.ifNotNull = ifNotNull
@@ -17,7 +17,7 @@ class Column:
         self.ifAutoIncrement = ifAutoIncrement
         self.ifForeignKey = ifForeignKey
         self.foreign_table_name = foreign_table_name
-        self.foreign_column_name = foreign_column_name
+        self.referenced_column_name = referenced_column_name
 
         # check if inputs valid
         if datatype not in Column.DATATYPES:  # check if datatype is valid
@@ -26,10 +26,10 @@ class Column:
         if (ifAutoIncrement) and (datatype != "INTEGER"):  # check if autoincrement valid
             raise TypeError(f"column '{name}':  can't have autoincrement with {datatype} datatype")
         
-        if ifForeignKey and not (foreign_table_name and foreign_column_name):  # check if all required information for foreign key given
-            raise Exception(f"column '{name}':  set as foreign key, but connected table and/or name of connected column not given")
-        if not ifForeignKey and (foreign_table_name or foreign_column_name):  # check if no redundant foreign key information given
-            raise Exception(f"column '{name}':  not set as foreign key, but connected table and/or name of connected column given")
+        if ifForeignKey and not (foreign_table_name and referenced_column_name):  # check if all required information for foreign key given
+            raise Exception(f"column '{name}':  set as foreign key, but connected table and not given")
+        if not ifForeignKey and (foreign_table_name or referenced_column_name):  # check if no redundant foreign key information given
+            raise Exception(f"column '{name}':  not set as foreign key, but connected table given")
 
 # special column types
 '''
@@ -44,9 +44,9 @@ class PrimaryKey(Column):
 Foreign Key column
 '''
 class ForeignKey(Column):
-    # default FK assumed to be INTEGER (due to referencing PK) and accept NULL. AUTOINCREMENT not possible
-    def __init__(self, name: str, datatype: str = "INTEGER", ifNotNull: bool = False, foreign_table_name: str = None, foreign_column_name: str = None) -> None:
-        super().__init__(name=name, datatype=datatype, ifNotNull=ifNotNull, ifForeignKey=True, foreign_table_name=foreign_table_name, foreign_column_name=foreign_column_name)
+    # default FK assumed to be INTEGER (due to referencing PK) and accept NULL. AUTOINCREMENT not possible. foreign key assumed to connect to primary key of foreign table
+    def __init__(self, name: str, foreign_table_name: str, referenced_column_name: str, datatype: str = "INTEGER", ifNotNull: bool = False) -> None:
+        super().__init__(name=name, datatype=datatype, ifNotNull=ifNotNull, ifForeignKey=True, foreign_table_name=foreign_table_name, referenced_column_name=referenced_column_name)
 
 
 '''
@@ -159,12 +159,12 @@ class DataBase(sqlite3.Cursor):
             # record foreign key information
             foreign_keys = self.execute(f"SELECT * FROM PRAGMA_FOREIGN_KEY_LIST('{table_name}');", ifReturnOutput=True)  # get infos of each foreign key; have to extract * due to wrong interpretation of 'from', 'table' and 'to'
             for fk_info in foreign_keys:
-                foreign_table_name, fk_name, foreign_column_name = fk_info[2], fk_info[3], fk_info[4]
+                foreign_table_name, fk_name, referenced_column_name = fk_info[2], fk_info[3], fk_info[4]
                 foreign_key_column = table.column_map[fk_name]  # get the column, falsely unclassified as foreign key
                 # update the column to an instance of ForeignKey
                 foreign_key_column = ForeignKey(
                     name=foreign_key_column.name, datatype=foreign_key_column.datatype, ifNotNull=foreign_key_column.ifNotNull,     # transfer the old attributes
-                    foreign_table_name=foreign_table_name, foreign_column_name=foreign_column_name                                  # enter new foreign key connection info
+                    foreign_table_name=foreign_table_name, referenced_column_name=referenced_column_name                            # enter new foreign key connection info
                     )
                 table.column_map[fk_name] = foreign_key_column  # update the column in the map
 
@@ -262,10 +262,8 @@ class DataBase(sqlite3.Cursor):
             column_strings.append(column_query)
 
             # add foreign key constraints
-            foreign_table_instance = self.fetch_table(column.foreign_table_name)  # determine foreign column name based on the table info
-            foreign_column_name = foreign_table_instance.primary_key.name
             if column.ifForeignKey:
-                constraint_string = f"FOREIGN KEY ({column.name}) REFERENCES {column.foreign_table_name}({foreign_column_name})"
+                constraint_string = f"FOREIGN KEY ({column.name}) REFERENCES {column.foreign_table_name}({column.referenced_column_name})"
                 fk_constraint_strings.append(constraint_string)
         
         # combine columns and foreign key constraint queries
@@ -428,7 +426,7 @@ class DataBase(sqlite3.Cursor):
             # get information relevant for connection
             fkey_instance = old_table_pointer._force_column(column=fkey)  # fkey connects old table to new, so is extracted from old table
             new_table_instance = self._force_table(table=new_table)
-            pkey_instance = new_table_instance._force_column(column=new_table.primary_key)
+            pkey_instance = new_table_instance.primary_key
             # construct subquery
             join_subquery = f"LEFT JOIN {new_table_instance.name} ON {new_table_instance.name}.{pkey_instance.name} = {fkey_instance.foreign_table_name}.{fkey_instance.name}"  # 'LEFT JOIN table2 ON table2.pk = table1.fk'
             join_subqueries.append(join_subquery)
