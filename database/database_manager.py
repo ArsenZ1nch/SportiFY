@@ -446,37 +446,88 @@ class DataBase(sqlite3.Cursor):
         return self.execute(sql_query=sql_query, ifReturnOutput=True)
         
 
+def fill_student_DB(database: DataBase, column_values_map: dict) -> None:
+    db_values = dict()
+
+    db_values["VorName"] = column_values_map["VorName"].copy()
+    db_values["NachName"] = column_values_map["NachName"].copy()
+
+    # convert text semester to integer (e. g. Q3 -> 3)
+    semester_values = list()
+    for semester_string in column_values_map["Semester"]:
+        semester_int = int(semester_string.strip("Q "))
+        semester_values.append(semester_int)
+    db_values["Semester"] = semester_values
+
+    # get unique sport names from Wuensche 1-6
+    sport_names_set = set()
+    for category_name, values_list in column_values_map.items():
+        if category_name.startswith("Wunsch"):
+            for sport_name in values_list:
+                sport_names_set.add(sport_name)
+
+    # map ids of sportkurse to their names
+    sport_id_map = dict()
+    for sport_name in sport_names_set:
+        sport_id_row = database.single_select(table="sportkurs", columns=["ID"], where_constraint=f"KursName = '{sport_name}'")  # row sport id data ([(id,)])
+        sport_id = sport_id_row[0][0]
+        sport_id_map[sport_name] = sport_id
+
+    # put wishes into db_values
+    for category_name, values_list in column_values_map.items():
+        if category_name.startswith("Wunsch"):
+            sport_id_list = list()  # list of sportkurs id corresponding to WunschX
+            for sport_name in values_list:
+                sport_id = sport_id_map[sport_name]
+                sport_id_list.append(sport_id)
+            db_column_name = f"{category_name}_ID"
+            db_values[db_column_name] = sport_id_list
+
+    # put values into DB
+    schueler_table = database.fetch_table("schueler")
+    column_data_list = list()
+    for column_name, values_list in db_values.items():
+        column_data = ColumnData(column=schueler_table.fetch_column(column_name), values=values_list)
+        column_data_list.append(column_data)
+    insert_data = DataMatrix(*column_data_list)
+
+    database.insert_values("schueler", data_matrix=insert_data)
+
+
+def fill_sportcourse_DB(database: DataBase, column_values_map: dict) -> None:
+    db_values = dict()
+
+    db_values["KursName"] = column_values_map["KursName"].copy()
+    db_values["Sporthalle"] = column_values_map["Sporthalle"].copy()
+    db_values["Lehrkraft"] = column_values_map["Lehrkraft"].copy()
+    db_values["Themenfeld"] = column_values_map["Themenfeld"].copy()
+    db_values["PlatzanzahlMAX"] = column_values_map["PlatzanzahlMAX"].copy()
+
+    # assign ifMinAnzahlVorhanden = False to all but GK Schwimmen
+    ifMinAnzahl_values = list()
+    for kursname in column_values_map["KursName"]:
+        if kursname == "Schwimmen":
+            ifMinAnzahl_values.append(False)
+        else:
+            ifMinAnzahl_values.append(True)
+    db_values["ifMinAnzahlVorhanden"] = ifMinAnzahl_values
+
+    # convert PlatzanzahlMAX to int
+    PlatzanzahlMAX_values = list()
+    for max_platzanzahl in column_values_map["PlatzanzahlMAX"]:
+        PlatzanzahlMAX_values.append(int(max_platzanzahl))
+    db_values["PlatzanzahlMAX"] = PlatzanzahlMAX_values
+
+    # put values into DB
+    sportkurs_table = database.fetch_table("sportkurs")
+    column_data_list = list()
+    for column_name, values_list in db_values.items():
+        column_data = ColumnData(column=sportkurs_table.fetch_column(column_name), values=values_list)
+        column_data_list.append(column_data)
+    insert_data = DataMatrix(*column_data_list)
+
+    database.insert_values(table=sportkurs_table, data_matrix=insert_data)
+
 
 if __name__ == "__main__":
     test_db = DataBase("test/test.db")
-    # test_db.reset()
-
-    # schueler_columns = [PrimaryKey(), Column("vorname", "TEXT", True), Column("nachname", "TEXT"), ForeignKey("wunschID", "INTEGER", foreign_table_name="sportkurs", foreign_column_name="ID")]
-    # sportkurs_columns = [PrimaryKey(), Column("name", "TEXT", True), Column("sporthalle", "TEXT", False)]
-
-    # test_db.create_table("sportkurs", sportkurs_columns)
-    # test_db.create_table("schueler", schueler_columns)
-    
-    schuler_table = test_db.fetch_table("schueler")
-    # names_list = ColumnData(schuler_table.fetch_column("vorname"), ("Markus", "Friedrich", "Andreas"))
-    # lnames_list = ColumnData(schuler_table.fetch_column("nachname"), ("Soeder", "Merz", "Andreass"))
-    # wunsch_list = ColumnData(schuler_table.fetch_column("wunschID"), (3, 2, None))
-
-    sportkurs_table = test_db.fetch_table("sportkurs")
-    # sportkurs_name_list = ColumnData(sportkurs_table.fetch_column("name"), ("Jagd", "Glueckspiel", "Schach", "Motorsport"))
-
-    # schuler_data = DataMatrix(names_list, lnames_list, wunsch_list)
-    # sportkurs_data = DataMatrix(sportkurs_name_list)
-
-
-    # test_db.insert_values("sportkurs", data_matrix=sportkurs_data)
-    # test_db.insert_values(schuler_table, data_matrix=schuler_data)
-
-
-    # for table in test_db.table_map.values():
-    #     print(table.column_map)
-    #     for column in table.column_map.values():
-    #         print(column, column.name, column.datatype, column.ifNotNull, column.ifPrimaryKey, column.ifAutoIncrement, column.ifForeignKey, column.foreign_table_name, column.foreign_column_name)
-
-    values = test_db.joins_select(tables_list=["schueler", sportkurs_table], columns_matrix=[["vorname", schuler_table.fetch_column("nachname")], ["name"]], foreign_keys_list=[schuler_table.fetch_column("wunschID")])
-    print(values)
